@@ -2,7 +2,9 @@
 
 Mandatory Hand-in 3 - Chitty Chat
 
-Submision due date: `Tuesday 31, October 2023, 23:59`
+Submision Due Date: *`Tuesday 31, October 2023, 23:59`*
+
+- [LaTeX Report](https://www.overleaf.com/project/6526533fc222a23d8a1ca8d4)
 
 <div style="text-align: center;">
     <img src="https://i.imgur.com/NcX1hkX.png" alt="Centered Image" width="300">
