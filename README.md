@@ -1,8 +1,16 @@
 # Chitty-Chat
+Distributed Systems (B-SWU & K-SD, Autumn 2023)
+* Mandatory Hand-in 3 - Chitty Chat
+* Submision Due Date: *`Tuesday 31, October 2023, 23:59`*
 
-Mandatory Hand-in 3 - Chitty Chat
 
-Submision Due Date: *`Tuesday 31, October 2023, 23:59`*
+
+## Authors
+- Phi Va Lo - phiy@itu.dk
+- Anna - Anna Høybye Johansen - annaj@itu.dk
+- Patrick Søborg - ptso@itu.dk
+
+## Report
 
 - [LaTeX Report](https://www.overleaf.com/project/6526533fc222a23d8a1ca8d4)
 
