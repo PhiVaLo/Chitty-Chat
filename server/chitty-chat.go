@@ -1,21 +1,20 @@
 package main
 
 import (
-	"PhysicalTime/proto"
+	"LogicalTime/proto"
 	"context"
 	"flag"
+	"google.golang.org/grpc"
 	"log"
 	"net"
 	"strconv"
-	"time"
-	"google.golang.org/grpc"
 )
 
 // Server Struct that will be used to represent the Server.
 type Server struct {
-	proto.UnimplementedTimeAskServer
-	name string
-	port int
+	proto.UnimplementedPublishServer
+	name      string
+	port      int
 	timestamp int
 }
 
@@ -28,8 +27,8 @@ func main() {
 
 	// Create a server struct
 	server := &Server{
-		name: "Chitty-Chat",
-		port: *port,
+		name:      "Chitty-Chat",
+		port:      *port,
 		timestamp: 0,
 	}
 
@@ -63,55 +62,56 @@ func startServer(server *Server) {
 }
 
 /*
-func (server *Server) participantLeft(ctx context.Context, in *proto.PublishMessage) (*proto.TimeMessage, error){
-	//Server receives the message therefore timestamp++
-	if(server.timestamp < in.timestamp) {
-		server.timestamp = in.timestamp
+	func (server *Server) participantLeft(ctx context.Context, in *proto.PublishMessage) (*proto.TimeMessage, error){
+		//Server receives the message therefore timestamp++
+		if(server.timestamp < in.timestamp) {
+			server.timestamp = in.timestamp
+		}
+		server.timestamp++;
+
+
+		//PRINT (Participant X left Chitty-Chat at Lamport time L)
+		log.Printf("Participant %d left Chitty-chat at timestamp %s\n", in.ClientId)
 	}
-	server.timestamp++;
+
+	func (server *Server) participantJoined(ctx context.Context, in *proto.PublishMessage) (*proto.TimeMessage, error){
+		//Server receives the message therefore timestamp++
+		if(server.timestamp < in.timestamp) {
+			server.timestamp = in.timestamp
+		}
+		server.timestamp++;
 
 
-	//PRINT (Participant X left Chitty-Chat at Lamport time L)
-	log.Printf("Participant %d left Chitty-chat at timestamp %s\n", in.ClientId)
-}
-
-func (server *Server) participantJoined(ctx context.Context, in *proto.PublishMessage) (*proto.TimeMessage, error){
-	//Server receives the message therefore timestamp++
-	if(server.timestamp < in.timestamp) {
-		server.timestamp = in.timestamp
+		//PRIT (Participant X  joined Chitty-Chat at Lamport time L)
+		log.Printf("Participant %d joined Chitty-chat at timestamp %s\n", in.ClientId, )
 	}
-	server.timestamp++;
-
-
-	//PRIT (Participant X  joined Chitty-Chat at Lamport time L)
-	log.Printf("Participant %d joined Chitty-chat at timestamp %s\n", in.ClientId, )
-}
 */
-func (server *Server) clientPublishMessage(ctx context.Context, in *proto.PublishMessage) (*proto.BroadcastMessage, error){
+func (server *Server) AskForPublish(ctx context.Context, in *proto.PublishMessage) (*proto.BroadcastMessage, error) {
 	//Server receives the message therefore timestamp++
-	if(server.timestamp < in.timestamp) {
-		server.timestamp = in.timestamp
+	if server.timestamp < int(in.Timestamp) {
+		server.timestamp = int(in.Timestamp)
 	}
-	server.timestamp++;
+	server.timestamp++
 
 	//PRINT (Participant x send the message: *** at lamport timestamp)
-	log.Printf("Participant %s send the message: %s at lamport timestamp %s\n", in.ClientId, in.message, server.timestamp)
-	
+	log.Printf("Participant %d send the message: %s at lamport timestamp %d \n", in.ClientId, in.Message, server.timestamp)
+
 	//Broadcast to the rest of the participants therefore timestamp++
-	server.timestamp++;
-	
-	return &proto.BroadcastMessage {
-		timestamp:      int64(server.timestamp),
-		message: 		in.message,
+	//TODO needs to send statement to all clients
+	server.timestamp++
+
+	return &proto.BroadcastMessage{
+		Timestamp: int64(server.timestamp),
+		Message:   in.Message,
 	}, nil
 }
 
-
-//Irrelevant
-func (server *Server) AskForTime(ctx context.Context, in *proto.AskForTimeMessage) (*proto.TimeMessage, error) {
-	log.Printf("Client with ID %d asked for the time\n", in.ClientId)
-	return &proto.TimeMessage{
-		Time:       time.Now().String(),
-		ServerName: server.name,
+/*
+func (server *Server) test(ctx context.Context, in *proto.PublishMessage) (*proto.BroadcastMessage, error) {
+	log.Printf("Server: Participant %d send the message: %s at lamport timestamp %d \n", in.ClientId, in.Message, server.timestamp)
+	return &proto.BroadcastMessage{
+		Timestamp: int64(server.timestamp),
+		Message:   in.Message,
 	}, nil
 }
+*/

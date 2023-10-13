@@ -1,17 +1,15 @@
 package main
 
 import (
-	"PhysicalTime/proto"
+	"LogicalTime/proto"
 	"bufio"
 	"context"
 	"flag"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"os"
 	"strconv"
-	"unicode/utf8"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 var global_id int = 0
@@ -40,10 +38,10 @@ func main() {
 		portNumber: *clientPort,
 		timestamp:  0,
 	}
-	serverConnection, _ := connectToServer(client)
+	//serverConnection, _ := connectToServer(client)
 
 	// Wait for the client (user) to send message
-	go sendMessage(client, serverConnection)
+	go sendMessage(client)
 	//go receiveMessage(client, serverConnection)
 
 	// Keep the client running
@@ -51,14 +49,14 @@ func main() {
 	}
 }
 
-func connectToServer(client *Client) (proto.TimeAskClient, error) {
+func connectToServer(client *Client) (proto.PublishClient, error) {
 	// Dial the server at the specified port.
 	conn, err := grpc.Dial("localhost:"+strconv.Itoa(*serverPort), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Could not connect to port %d", *serverPort)
 	} else {
 		//SHOULD BE SENT TO SERVER TO BROADCAST TO THE REST
-		log.Printf("Participant %s joined the Chitty-chat server at port %d\n", client.id, *serverPort)
+		log.Printf("Participant %d joined the Chitty-chat server at port %d\n", client.id, *serverPort)
 
 		//Update timestamp since participant joined
 		client.timestamp++
@@ -67,32 +65,37 @@ func connectToServer(client *Client) (proto.TimeAskClient, error) {
 	return proto.NewPublishClient(conn), nil
 }
 
-func sendMessage(client *Client, serverConnection *connectToServer) {
+func sendMessage(client *Client) {
 	// Wait for input in the client terminal
 	scanner := bufio.NewScanner(os.Stdin)
+
+	serverConnection, _ := connectToServer(client)
+
 	for scanner.Scan() {
 		input := scanner.Text()
 
-		// if(len(input) > 128){
-		// 	log.Printf("Message is too big (maximum length 128 characters)");
-		// 	continue; //Starts the for loop from scratch
-		// }
-
-		// To ensure that a string is a valid message with a maximum length of 128 characters
-		if utf8.RuneCountInString(input) > 128 {
+		if len(input) > 128 {
 			log.Printf("Message is too big (maximum length 128 characters)")
 			continue //Starts the for loop from scratch
 		}
 
+		/*
+			// To ensure that a string is a valid message with a maximum length of 128 characters
+			if utf8.RuneCountInString(input) > 128 {
+				log.Printf("Message is too big (maximum length 128 characters)")
+				continue //Starts the for loop from scratch
+			}
+		*/
+
 		//Sends message timestamp++
 		client.timestamp++
-		log.Printf("Participant sends the message: %s at the time %s\n", input, client.timestamp)
+		log.Printf("Participant sends the message: %s at the time %d \n", input, client.timestamp)
 
 		// Ask the server to publish the message
 		broadcastReturnMessage, err := serverConnection.AskForPublish(context.Background(), &proto.PublishMessage{
 			ClientId:  int64(client.id),
-			timestamp: int64(client.timestamp),
-			message:   input,
+			Timestamp: int64(client.timestamp),
+			Message:   input,
 		})
 
 		if err != nil {
@@ -100,13 +103,14 @@ func sendMessage(client *Client, serverConnection *connectToServer) {
 		}
 
 		//Client receives a message, so the timestamp is updated
-		if client.timestamp < broadcastReturnMessage.timestamp {
-			client.timestamp = broadcastReturnMessage.timestamp
+		if client.timestamp < int(broadcastReturnMessage.Timestamp) {
+			client.timestamp = int(broadcastReturnMessage.Timestamp)
 		}
 		client.timestamp++
 	}
 }
 
+/*
 func receiveMessage(client *Client, serverConnection *connectToServer) {
 	//PRINT (Client received the message: *** at lamport timestamp)
 }
@@ -138,3 +142,4 @@ func waitForTimeRequest(client *Client) {
 		}
 	}
 }
+*/

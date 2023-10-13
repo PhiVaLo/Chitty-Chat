@@ -1,6 +1,6 @@
-module github.com/PhiVaLo/Chitty-Chat
+module LogicalTime
 
-go 1.21.2
+go 1.21.1
 
 require (
 	google.golang.org/grpc v1.58.3
