@@ -65,13 +65,25 @@ func startServer(server *Server) {
 
 
 func (server *Server) participantLeft(ctx context.Context, in *proto.PublishMessage) (*proto.TimeMessage, error){
+	//Server receives the message therefore timestamp++
+	if(server.timestamp < in.timestamp) {
+		server.timestamp = in.timestamp
+	}
 	server.timestamp++;
+
+
 	//PRINT (Participant X left Chitty-Chat at Lamport time L)
-	log.Printf("Participant %d left Chitty-chat\n", in.ClientId)
+	log.Printf("Participant %d left Chitty-chat at timestamp %s\n", in.ClientId)
 }
 
 func (server *Server) participantJoined(ctx context.Context, in *proto.PublishMessage) (*proto.TimeMessage, error){
+	//Server receives the message therefore timestamp++
+	if(server.timestamp < in.timestamp) {
+		server.timestamp = in.timestamp
+	}
 	server.timestamp++;
+
+	
 	//PRIT (Participant X  joined Chitty-Chat at Lamport time L)
 	log.Printf("Participant %d joined Chitty-chat at timestamp %s\n", in.ClientId, )
 }
