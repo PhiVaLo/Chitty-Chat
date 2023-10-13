@@ -5,18 +5,21 @@ import (
 	"bufio"
 	"context"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"strconv"
+	"unicode/utf8"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+var global_id int = 0
+
 type Client struct {
 	id         int
 	portNumber int
+	timestamp  int
 }
 
 var (
@@ -28,76 +31,94 @@ func main() {
 	// Parse the flags to get the port for the client
 	flag.Parse()
 
+	// Each client has a unique id
+	global_id++
+
 	// Create a client
 	client := &Client{
-		id:         1,
+		id:         global_id,
 		portNumber: *clientPort,
+		timestamp:  0,
 	}
-	serverConnection, _ := connectToServer()
+	serverConnection, _ := connectToServer(client)
 
-	// Wait for the client (user) to ask for the time
-	go waitForTimeRequest(client)
-
-	go waitForClientJoin(client)
-	go waitForClientLeave(client)
+	// Wait for the client (user) to send message
+	go sendMessage(client, serverConnection)
+	//go receiveMessage(client, serverConnection)
 
 	// Keep the client running
 	for {
 	}
 }
 
-func connectToServer() (proto.TimeAskClient, error) {
+func connectToServer(client *Client) (proto.TimeAskClient, error) {
 	// Dial the server at the specified port.
 	conn, err := grpc.Dial("localhost:"+strconv.Itoa(*serverPort), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Could not connect to port %d", *serverPort)
 	} else {
-		log.Printf("Connected to the server at port %d\n", *serverPort)
+		//SHOULD BE SENT TO SERVER TO BROADCAST TO THE REST
+		log.Printf("Participant %s joined the Chitty-chat server at port %d\n", client.id, *serverPort)
+
+		//Update timestamp since participant joined
+		client.timestamp++
 	}
-	return proto.NewTimeAskClient(conn), nil
+
+	return proto.NewPublishClient(conn), nil
 }
 
-func participant(){
-
-}
-
-func leaveChat(){
-
-}
-
-func joinChat(){
-
-}
-
-func receiveMessage(){
-	//PRINT (Client received the message: *** at lamport timestamp)
-}
-
-func sendMessage(client *Client, serverConnection *connectToServer){
+func sendMessage(client *Client, serverConnection *connectToServer) {
 	// Wait for input in the client terminal
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		input := scanner.Text()
-		message := fmt.Sprintf("Participant sends the message: %s\n", input); //Skal ikke printes i log, skal sendes til server
 
-		// Ask the server for the time
-		timeReturnMessage, err := serverConnection.AskForTime(context.Background(), &proto.PublishMessage{
-			ClientId: int64(client.id),
-			message: input,
+		// if(len(input) > 128){
+		// 	log.Printf("Message is too big (maximum length 128 characters)");
+		// 	continue; //Starts the for loop from scratch
+		// }
+
+		// To ensure that a string is a valid message with a maximum length of 128 characters
+		if utf8.RuneCountInString(input) > 128 {
+			log.Printf("Message is too big (maximum length 128 characters)")
+			continue //Starts the for loop from scratch
+		}
+
+		//Sends message timestamp++
+		client.timestamp++
+		log.Printf("Participant sends the message: %s at the time %s\n", input, client.timestamp)
+
+		// Ask the server to publish the message
+		broadcastReturnMessage, err := serverConnection.AskForPublish(context.Background(), &proto.PublishMessage{
+			ClientId:  int64(client.id),
+			timestamp: int64(client.timestamp),
+			message:   input,
 		})
 
 		if err != nil {
 			log.Printf(err.Error())
-		} else {
-			message = fmt.Sprintf(message + " at the time %s\n", timeReturnMessage.ServerName, timeReturnMessage.Time);
-			return message
-			//message := fmt.Sprintf("%s at the time %s\n", timeReturnMessage.ServerName, timeReturnMessage.Time);
 		}
+
+		//Client receives a message, so the timestamp is updated
+		if client.timestamp < broadcastReturnMessage.timestamp {
+			client.timestamp = broadcastReturnMessage.timestamp
+		}
+		client.timestamp++
 	}
 }
 
+func receiveMessage(client *Client, serverConnection *connectToServer) {
+	//PRINT (Client received the message: *** at lamport timestamp)
+}
 
+func participant() {
 
+}
+
+func leaveChat() {
+	//log.Printf("Participant %s left chitty-chat", client.id)
+	//Broadcast to all clients that this person left
+}
 
 func waitForTimeRequest(client *Client) {
 	// Connect to the server

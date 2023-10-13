@@ -8,8 +8,6 @@ import (
 	"net"
 	"strconv"
 	"time"
-
-	"github.com/golang/protobuf/ptypes/timestamp"
 	"google.golang.org/grpc"
 )
 
@@ -30,8 +28,9 @@ func main() {
 
 	// Create a server struct
 	server := &Server{
-		name: "serverName",
+		name: "Chitty-Chat",
 		port: *port,
+		timestamp: 0,
 	}
 
 	// Start the server
@@ -56,7 +55,7 @@ func startServer(server *Server) {
 	log.Printf("Started server at port: %d\n", server.port)
 
 	// Register the grpc server and serve its listener
-	proto.RegisterTimeAskServer(grpcServer, server)
+	proto.RegisterPublishServer(grpcServer, server)
 	serveError := grpcServer.Serve(listener)
 	if serveError != nil {
 		log.Fatalf("Could not serve listener")
@@ -83,12 +82,10 @@ func (server *Server) participantJoined(ctx context.Context, in *proto.PublishMe
 	}
 	server.timestamp++;
 
-	
+
 	//PRIT (Participant X  joined Chitty-Chat at Lamport time L)
 	log.Printf("Participant %d joined Chitty-chat at timestamp %s\n", in.ClientId, )
 }
-
-
 
 func (server *Server) clientPublishMessage(ctx context.Context, in *proto.PublishMessage) (*proto.BroadcastMessage, error){
 	//Server receives the message therefore timestamp++
@@ -104,20 +101,13 @@ func (server *Server) clientPublishMessage(ctx context.Context, in *proto.Publis
 	server.timestamp++;
 	
 	return &proto.BroadcastMessage {
-		timestamp:      server.timestamp,
+		timestamp:      int64(server.timestamp),
 		message: 		in.message,
 	}, nil
 }
 
-// Der er to clients den første sender en besked (lamport = 1)
-// Server modtager besked (lamport = 2)
-// Server sender besked til første client (lamport = 3)
-// Server sender besked til anden client (lamport = 4)
 
-// Første client sender ny besked (lamport = 4)
-
-
-
+//Irrelevant
 func (server *Server) AskForTime(ctx context.Context, in *proto.AskForTimeMessage) (*proto.TimeMessage, error) {
 	log.Printf("Client with ID %d asked for the time\n", in.ClientId)
 	return &proto.TimeMessage{
