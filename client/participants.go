@@ -111,10 +111,6 @@ func receiveMessage(client *Client, serverConnection *connectToServer) {
 	//PRINT (Client received the message: *** at lamport timestamp)
 }
 
-func participant() {
-
-}
-
 func leaveChat() {
 	//log.Printf("Participant %s left chitty-chat", client.id)
 	//Broadcast to all clients that this person left
