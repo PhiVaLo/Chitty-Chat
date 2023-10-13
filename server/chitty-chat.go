@@ -31,6 +31,7 @@ func main() {
 		name:      "Chitty-Chat",
 		port:      *port,
 		timestamp: 0,
+		clients: make(map[int]proto.PublishClient),
 	}
 
 	// Start the server
