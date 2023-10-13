@@ -110,11 +110,11 @@ func sendMessage(client *Client) {
 	}
 }
 
-/*
-func receiveMessage(client *Client, serverConnection *connectToServer) {
+func receiveMessage(client *Client, serverConnection proto.PublishClient) {
 	//PRINT (Client received the message: *** at lamport timestamp)
 }
 
+/*
 func leaveChat() {
 	//log.Printf("Participant %s left chitty-chat", client.id)
 	//Broadcast to all clients that this person left

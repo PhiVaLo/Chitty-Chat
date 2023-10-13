@@ -16,6 +16,7 @@ type Server struct {
 	name      string
 	port      int
 	timestamp int
+	clients   map[int]proto.PublishClient
 }
 
 // Used to get the user-defined port for the server from the command line
@@ -61,6 +62,46 @@ func startServer(server *Server) {
 	}
 }
 
+func (server *Server) AddClientToServer(clientID int, client proto.PublishClient) {
+	server.clients[clientID] = client
+}
+
+func (server *Server) RemoveClientFromServer(clientID int) {
+	server.clients[clientID] = nil
+}
+
+func (server *Server) AskForPublish(ctx context.Context, in *proto.PublishMessage) (*proto.BroadcastMessage, error) {
+	//Server receives the message therefore timestamp++
+	if server.timestamp < int(in.Timestamp) {
+		server.timestamp = int(in.Timestamp)
+	}
+	server.timestamp++
+
+	//PRINT (Participant x send the message: *** at lamport timestamp)
+	log.Printf("Participant %d send the message: %s at lamport timestamp %d \n", in.ClientId, in.Message, server.timestamp)
+
+	//Broadcast to the rest of the participants
+	//TODO: Broadcast statement to all clients except the one who originally send it
+	for id, client := range server.clients {
+		if id != int(in.ClientId) && client != nil {
+			server.timestamp++
+			msg := &proto.BroadcastMessage{
+				Timestamp: int64(server.timestamp),
+				Message:   in.Message,
+			}
+
+			//client.BroadcastMessage(context.Background(), msg)
+		}
+	}
+
+	//Sends statement to original client
+	server.timestamp++
+	return &proto.BroadcastMessage{
+		Timestamp: int64(server.timestamp),
+		Message:   in.Message,
+	}, nil
+}
+
 /*
 	func (server *Server) participantLeft(ctx context.Context, in *proto.PublishMessage) (*proto.TimeMessage, error){
 		//Server receives the message therefore timestamp++
@@ -86,25 +127,6 @@ func startServer(server *Server) {
 		log.Printf("Participant %d joined Chitty-chat at timestamp %s\n", in.ClientId, )
 	}
 */
-func (server *Server) AskForPublish(ctx context.Context, in *proto.PublishMessage) (*proto.BroadcastMessage, error) {
-	//Server receives the message therefore timestamp++
-	if server.timestamp < int(in.Timestamp) {
-		server.timestamp = int(in.Timestamp)
-	}
-	server.timestamp++
-
-	//PRINT (Participant x send the message: *** at lamport timestamp)
-	log.Printf("Participant %d send the message: %s at lamport timestamp %d \n", in.ClientId, in.Message, server.timestamp)
-
-	//Broadcast to the rest of the participants therefore timestamp++
-	//TODO needs to send statement to all clients
-	server.timestamp++
-
-	return &proto.BroadcastMessage{
-		Timestamp: int64(server.timestamp),
-		Message:   in.Message,
-	}, nil
-}
 
 /*
 func (server *Server) test(ctx context.Context, in *proto.PublishMessage) (*proto.BroadcastMessage, error) {
