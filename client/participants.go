@@ -42,7 +42,9 @@ func main() {
 
 	// Wait for the client (user) to send message
 	go sendMessage(client)
-	//go receiveMessage(client, serverConnection)
+
+	// Wait to receive a message
+	//go receiveMessage()
 
 	// Keep the client running
 	for {
@@ -112,8 +114,15 @@ func sendMessage(client *Client) {
 	}
 }
 
-func (client *Client) AskForBroadcast(ctx context.Context, in *proto.BroadcastMessage) (*proto.BroadcastMessage, error) {
-	
+func (client *Client) AskForBroadcast(ctx context.Context, in *proto.PublishMessage) (*proto.BroadcastMessage, error) {
+	//Client receives the message therefore timestamp++
+	if client.timestamp < int(in.Timestamp) {
+		client.timestamp = int(in.Timestamp)
+	}
+	client.timestamp++
+
+	log.Printf("Participant %d send the message: %s at lamport timestamp %d \n", in.ClientId, in.Message, client.timestamp)
+
 	return nil, nil
 }
 

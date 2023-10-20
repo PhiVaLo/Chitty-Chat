@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"strconv"
+	// "fmt"
 )
 
 // Server Struct that will be used to represent the Server.
@@ -90,7 +91,8 @@ func (server *Server) AskForPublish(ctx context.Context, in *proto.PublishMessag
 	for id, client := range server.clients {
 		if id != int(in.ClientId) && client != nil {
 			server.timestamp++ //Timestamp go up for everytime its send
-			msg := &proto.BroadcastMessage{
+			msg := &proto.PublishMessage{
+				ClientId:  int64(in.ClientId),
 				Timestamp: int64(server.timestamp),
 				Message:   in.Message,
 			}
