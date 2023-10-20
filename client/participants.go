@@ -10,14 +10,30 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"sync"
 )
 
-var global_id int = 0
+var globalId int
+var globalMutex sync.Mutex
+
+func setGlobalId(id int) {
+    globalMutex.Lock()
+    globalId = id
+    globalMutex.Unlock()
+}
+
+func getGlobalId() int {
+	globalMutex.Lock()
+    id := globalId
+    globalMutex.Unlock()
+    return id
+}
 
 type Client struct {
 	id         int
 	portNumber int
 	timestamp  int
+	serverConn proto.PublishClient
 }
 
 var (
@@ -30,21 +46,17 @@ func main() {
 	flag.Parse()
 
 	// Each client has a unique id
-	global_id++
+	setGlobalId(getGlobalId()+1)
 
 	// Create a client
 	client := &Client{
-		id:         global_id,
+		id:         getGlobalId(),
 		portNumber: *clientPort,
 		timestamp:  0,
 	}
-	//serverConnection, _ := connectToServer(client)
 
 	// Wait for the client (user) to send message
 	go sendMessage(client)
-
-	// Wait to receive a message
-	//go receiveMessage()
 
 	// Keep the client running
 	for {
@@ -65,11 +77,13 @@ func sendMessage(client *Client) {
 	// Wait for input in the client terminal
 	scanner := bufio.NewScanner(os.Stdin)
 
+	//Connects to server
 	serverConnection, _ := connectToServer(client)
 	
 	serverConnection.AskToJoin(context.Background(), &proto.JoinOrLeaveMessage{
-		ClientId: int64(client.id),
+		ClientId:  int64(client.id),
 		Timestamp: int64(client.timestamp),
+		Port:      int64(client.portNumber),
 	})
 	log.Printf("Participant %d joined the Chitty-chat server at port %d\n", client.id, *serverPort)
 
@@ -88,12 +102,12 @@ func sendMessage(client *Client) {
 		log.Printf("Participant sends the message: %s at the time %d \n", input, client.timestamp)
 
 		// Ask the server to publish the message
-		broadcastReturnMessage, err := serverConnection.AskForPublish(context.Background(), &proto.PublishMessage{
+		/*broadcastReturnMessage, err :=*/ serverConnection.AskForPublish(context.Background(), &proto.PublishMessage{
 			ClientId:  int64(client.id),
 			Timestamp: int64(client.timestamp),
 			Message:   input,
 		})
-
+		/*
 		if err != nil {
 			log.Printf(err.Error())
 		}
@@ -102,11 +116,11 @@ func sendMessage(client *Client) {
 		if client.timestamp < int(broadcastReturnMessage.Timestamp) {
 			client.timestamp = int(broadcastReturnMessage.Timestamp)
 		}
-		client.timestamp++
+		client.timestamp++*/
 	}
 }
 
-func (client *Client) AskForBroadcast(ctx context.Context, in *proto.PublishMessage) (*proto.BroadcastMessage, error) {
+func (client *Client) AskForMessageBroadcast(ctx context.Context, in *proto.PublishMessage) (*proto.BroadcastMessage, error) {
 	//Client receives the message therefore timestamp++
 	if client.timestamp < int(in.Timestamp) {
 		client.timestamp = int(in.Timestamp)
@@ -114,6 +128,30 @@ func (client *Client) AskForBroadcast(ctx context.Context, in *proto.PublishMess
 	client.timestamp++
 
 	log.Printf("Participant %d send the message: %s at lamport timestamp %d \n", in.ClientId, in.Message, client.timestamp)
+
+	return nil, nil
+}
+
+func (client *Client) AskForJoinBroadcast(ctx context.Context, in *proto.JoinOrLeaveMessage) (*proto.BroadcastMessage, error) {
+	//Client receives the message therefore timestamp++
+	if client.timestamp < int(in.Timestamp) {
+		client.timestamp = int(in.Timestamp)
+	}
+	client.timestamp++
+
+	log.Printf("Participant %d joined at lamport timestamp %d \n", in.ClientId, client.timestamp)
+
+	return nil, nil
+}
+
+func (client *Client) AskForLeaveBroadcast(ctx context.Context, in *proto.JoinOrLeaveMessage) (*proto.BroadcastMessage, error) {
+	//Client receives the message therefore timestamp++
+	if client.timestamp < int(in.Timestamp) {
+		client.timestamp = int(in.Timestamp)
+	}
+	client.timestamp++
+
+	log.Printf("Participant %d left at lamport timestamp %d \n", in.ClientId, client.timestamp)
 
 	return nil, nil
 }
@@ -167,11 +205,6 @@ func receiveMessage(client *Client, serverConnection proto.PublishClient) {
 
 
 
-/*
-func leaveChat() {
-	//log.Printf("Participant %s left chitty-chat", client.id)
-	//Broadcast to all clients that this person left
-}
 
 func waitForTimeRequest(client *Client) {
 	// Connect to the server

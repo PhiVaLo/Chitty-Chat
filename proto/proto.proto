@@ -24,8 +24,11 @@ message JoinOrLeaveMessage {
 }
 
 service Publish {
-    rpc AskForPublish(PublishMessage) returns (BroadcastMessage);
+    rpc AskForPublish(PublishMessage) returns (google.protobuf.Empty);
     rpc AskToJoin(JoinOrLeaveMessage) returns (google.protobuf.Empty);
     rpc AskToLeave(JoinOrLeaveMessage) returns (google.protobuf.Empty);
-    rpc AskForBroadcast(PublishMessage) returns (google.protobuf.Empty);
+
+    rpc AskForMessageBroadcast(PublishMessage) returns (google.protobuf.Empty);
+    rpc AskForJoinBroadcast(JoinOrLeaveMessage) returns (google.protobuf.Empty);
+    rpc AskForLeaveBroadcast(JoinOrLeaveMessage) returns (google.protobuf.Empty);
 }
