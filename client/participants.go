@@ -2,32 +2,17 @@ package main
 
 import (
 	"LogicalTime/proto"
+	"LogicalTime/shared"
 	"bufio"
 	"context"
 	"flag"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"os"
 	"strconv"
-	"sync"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
-
-var globalId int
-var globalMutex sync.Mutex
-
-func setGlobalId(id int) {
-    globalMutex.Lock()
-    globalId = id
-    globalMutex.Unlock()
-}
-
-func getGlobalId() int {
-	globalMutex.Lock()
-    id := globalId
-    globalMutex.Unlock()
-    return id
-}
 
 type Client struct {
 	id         int
@@ -45,12 +30,14 @@ func main() {
 	// Parse the flags to get the port for the client
 	flag.Parse()
 
-	// Each client has a unique id
-	setGlobalId(getGlobalId()+1)
+	// TODO
+	// Each client has a unique ID
+	newID := shared.GetGlobalId() + 1
+	shared.SetGlobalId(newID)
 
 	// Create a client
 	client := &Client{
-		id:         getGlobalId(),
+		id:         newID,
 		portNumber: *clientPort,
 		timestamp:  0,
 	}
@@ -79,7 +66,7 @@ func sendMessage(client *Client) {
 
 	//Connects to server
 	serverConnection, _ := connectToServer(client)
-	
+
 	serverConnection.AskToJoin(context.Background(), &proto.JoinOrLeaveMessage{
 		ClientId:  int64(client.id),
 		Timestamp: int64(client.timestamp),
@@ -102,21 +89,22 @@ func sendMessage(client *Client) {
 		log.Printf("Participant sends the message: %s at the time %d \n", input, client.timestamp)
 
 		// Ask the server to publish the message
-		/*broadcastReturnMessage, err :=*/ serverConnection.AskForPublish(context.Background(), &proto.PublishMessage{
+		/*broadcastReturnMessage, err :=*/
+		serverConnection.AskForPublish(context.Background(), &proto.PublishMessage{
 			ClientId:  int64(client.id),
 			Timestamp: int64(client.timestamp),
 			Message:   input,
 		})
 		/*
-		if err != nil {
-			log.Printf(err.Error())
-		}
+			if err != nil {
+				log.Printf(err.Error())
+			}
 
-		//Client receives a message, so the timestamp is updated
-		if client.timestamp < int(broadcastReturnMessage.Timestamp) {
-			client.timestamp = int(broadcastReturnMessage.Timestamp)
-		}
-		client.timestamp++*/
+			//Client receives a message, so the timestamp is updated
+			if client.timestamp < int(broadcastReturnMessage.Timestamp) {
+				client.timestamp = int(broadcastReturnMessage.Timestamp)
+			}
+			client.timestamp++*/
 	}
 }
 

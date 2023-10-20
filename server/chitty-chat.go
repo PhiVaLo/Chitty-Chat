@@ -23,11 +23,6 @@ type Server struct {
 	clients   map[int]proto.PublishClient
 }
 
-type miniClient struct {
-	id    int
-	port  int
-}
-
 // Used to get the user-defined port for the server from the command line
 var port = flag.Int("port", 0, "server port number")
 
