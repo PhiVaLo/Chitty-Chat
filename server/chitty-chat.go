@@ -80,17 +80,6 @@ func (server *Server) RemoveClientFromServer(clientID int) {
 	// remove clientID from the map
 	delete(server.clients, clientID)
 }
-func (server *Server) BroadcastMessageToClients(message *proto.PublishMessage, ignoreId int) {
-    for id, client := range server.clients {
-        if client != nil && client.id != ignoreId {
-            go func(c *miniClient) {
-                c.AskForBroadcast(context.Background(), message)
-
-            }(client)
-        }
-    }
-}
-
 
 func (server *Server) AskForPublish(ctx context.Context, in *proto.PublishMessage) (*proto.BroadcastMessage, error) {
 	//Server receives the message therefore timestamp++
@@ -102,19 +91,24 @@ func (server *Server) AskForPublish(ctx context.Context, in *proto.PublishMessag
 	//Server prints in terminal for us to see
 	log.Printf("Participant %d send the message: %s at lamport timestamp %d \n", in.ClientId, in.Message, server.timestamp)
 
-	//Sends the message to the rest of the participants, except the one who originally send it
 	for id, client := range server.clients {
-		if id != int(in.ClientId) && client != nil {
+        if client != nil && id != int(in.ClientId) {
 			server.timestamp++ //Timestamp go up for every event (so for every client its send to)
+
 			msg := &proto.PublishMessage{ //We only send the information, not the entire string
 				ClientId:  int64(in.ClientId),
 				Timestamp: int64(server.timestamp),
 				Message:   in.Message,
 			}
-			// Skal omskrives da clients map er en ministruct
-			client.AskForBroadcast(context.Background(), msg) //Sends the information to the clients
-		}
-	}
+			
+			//Add waitgroup
+			//Change function to work
+
+            go func(c *miniClient) {
+                c.AskForBroadcast(context.Background(), msg)
+            }(client)
+        }
+    }
 
 	//Sends message to the original client
 	server.timestamp++ //Timestamp goes up, since server creates an event
@@ -141,13 +135,33 @@ func (server *Server) AskToJoin(ctx context.Context, in *proto.JoinOrLeaveMessag
 }
 
 func (server *Server) AskToLeave(ctx context.Context, in *proto.JoinOrLeaveMessage) (*emptypb.Empty, error){
-	server.timestamp++; //Server recieves that a client leaves
+	//Server receives the message therefore timestamp++
+	if(server.timestamp < int(in.Timestamp)) {
+		server.timestamp = int(in.Timestamp)
+	}
+	server.timestamp++;
 	
 	if(server.clients == nil){ //If list of clients is empty
 		return nil, nil
 	} else {
 		//Send message to all remaining participants
 		//"Participant x left the server at lamport timestamp: x"
+		
+		for id, client := range server.clients {
+			if client != nil && id != int(in.ClientId) {
+				server.timestamp++ //Timestamp go up for every event (so for every client its send to)
+	
+				msg := &proto.JoinOrLeaveMessage{ //We only send the information, not the entire string
+					ClientId:  int64(in.ClientId),
+					Timestamp: int64(server.timestamp),
+					Port: int64(in.Port),
+				}
+	
+				go func(c *miniClient) {
+					c.AskToLeave(context.Background(), msg)
+				}(client)
+			}
+		}
 	}
 	
 	//Remove client from the server
