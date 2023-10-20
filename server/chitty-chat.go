@@ -73,7 +73,12 @@ func startServer(server *Server) {
 }
 
 func (server *Server) AddClientToServer(clientId int, client proto.PublishClient) {
-	server.clients[clientId] = client
+	_, exists := server.clients[clientId]
+	if(!exists) {
+		server.clients[clientId] = client
+	} else {
+		log.Fatalf("Client with id %d already exists", clientId)
+	}	
 }
 
 func (server *Server) RemoveClientFromServer(clientID int) {
@@ -118,7 +123,7 @@ func (server *Server) AskForPublish(ctx context.Context, in *proto.PublishMessag
 		Timestamp: int64(server.timestamp),
 		Message:   in.Message,
 	}, nil*/
-	return nil, nil
+	return &emptypb.Empty{}, nil
 }
 
 func (server *Server) AskToJoin(ctx context.Context, in *proto.JoinOrLeaveMessage) (*emptypb.Empty, error) {
@@ -158,7 +163,7 @@ func (server *Server) AskToJoin(ctx context.Context, in *proto.JoinOrLeaveMessag
     }
 	wg.Wait()
 
-	return nil, nil
+	return &emptypb.Empty{}, nil
 }
 
 func (server *Server) AskToLeave(ctx context.Context, in *proto.JoinOrLeaveMessage) (*emptypb.Empty, error){
@@ -195,7 +200,7 @@ func (server *Server) AskToLeave(ctx context.Context, in *proto.JoinOrLeaveMessa
 	//Remove client from the server
 	server.RemoveClientFromServer(int(in.ClientId))
 	
-	return nil, nil
+	return &emptypb.Empty{}, nil
 }
 
 
