@@ -10,6 +10,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"sync"
 	// "fmt"
 )
 
@@ -90,6 +91,7 @@ func (server *Server) AskForPublish(ctx context.Context, in *proto.PublishMessag
 	//Server prints in terminal for us to see
 	log.Printf("Participant %d send the message: %s at lamport timestamp %d \n", in.ClientId, in.Message, server.timestamp)
 
+	var wg sync.WaitGroup //Add waitgroup
 	for _, client := range server.clients {
         if client != nil /*&& id != int(in.ClientId)*/ {
 			server.timestamp++ //Timestamp go up for every event (so for every client its send to)
@@ -99,13 +101,16 @@ func (server *Server) AskForPublish(ctx context.Context, in *proto.PublishMessag
 				Timestamp: int64(server.timestamp),
 				Message:   in.Message,
 			}
-			
-			//Add waitgroup
+		
+			wg.Add(1)
             go func(c proto.PublishClient) {
                 c.AskForMessageBroadcast(context.Background(), msg)
+				defer wg.Done()
             }(client)
         }
     }
+	wg.Wait()
+	
 	/* Remove return
 	//Sends message to the original client
 	server.timestamp++ //Timestamp goes up, since server creates an event
@@ -134,6 +139,7 @@ func (server *Server) AskToJoin(ctx context.Context, in *proto.JoinOrLeaveMessag
 	server.AddClientToServer(int(in.ClientId), clientConnection);
 
 	//Broadcast the joining participant to all existing clients
+	var wg sync.WaitGroup //Add waitgroup
 	for _, client := range server.clients {
         if client != nil /*&& id != int(in.ClientId)*/ {
 			server.timestamp++ //Timestamp go up for every event (so for every client it is send to)
@@ -143,12 +149,14 @@ func (server *Server) AskToJoin(ctx context.Context, in *proto.JoinOrLeaveMessag
 				Timestamp: int64(server.timestamp),
 			}
 			
-			//Add waitgroup
+			wg.Add(1) 
             go func(c proto.PublishClient) {
                 c.AskForJoinBroadcast(context.Background(), msg)
+				defer wg.Done()
             }(client)
         }
     }
+	wg.Wait()
 
 	return nil, nil
 }
@@ -164,6 +172,7 @@ func (server *Server) AskToLeave(ctx context.Context, in *proto.JoinOrLeaveMessa
 		return nil, nil
 	} else {
 		//Send message to all remaining clients		
+		var wg sync.WaitGroup //Add waitgroup
 		for _, client := range server.clients {
 			if client != nil /*&& id != int(in.ClientId)*/ {
 				server.timestamp++ //Timestamp go up for every event (so for every client it is send to)
@@ -173,12 +182,14 @@ func (server *Server) AskToLeave(ctx context.Context, in *proto.JoinOrLeaveMessa
 					Timestamp: int64(server.timestamp),
 				}
 				
-				//Add waitgroup
+				wg.Add(1)
 				go func(c proto.PublishClient) {
 					c.AskForLeaveBroadcast(context.Background(), msg)
+					defer wg.Done()
 				}(client)
 			}
 		}
+		wg.Wait()
 	}
 	
 	//Remove client from the server
