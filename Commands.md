@@ -1,15 +1,17 @@
 # From root-directory
 
 
-
 Terminal-1 (server):
 
-    go run ./server/chitty-chat.go -port 5454
+```bash
+go run ./server/chitty-chat.go -port 5454
+```
 
 Terminal-2 (client):
 
-    go run ./client/participants.go -port 8080 -sPort 5454
-
+```bash
+go run ./client/participants.go -cPort 8080 -sPort 5454
+```
 
 Generate proto files:
 

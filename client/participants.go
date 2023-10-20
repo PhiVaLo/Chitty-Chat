@@ -56,12 +56,6 @@ func connectToServer(client *Client) (proto.PublishClient, error) {
 	conn, err := grpc.Dial("localhost:"+strconv.Itoa(*serverPort), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Could not connect to port %d", *serverPort)
-	} else {
-		//SHOULD BE SENT TO SERVER TO BROADCAST TO THE REST
-		log.Printf("Participant %d joined the Chitty-chat server at port %d\n", client.id, *serverPort)
-
-		//Update timestamp since participant joined
-		client.timestamp++
 	}
 
 	return proto.NewPublishClient(conn), nil
@@ -72,6 +66,14 @@ func sendMessage(client *Client) {
 	scanner := bufio.NewScanner(os.Stdin)
 
 	serverConnection, _ := connectToServer(client)
+	
+	serverConnection.AskToJoin(context.Background(), &proto.JoinOrLeaveMessage{
+		ClientId: int64(client.id),
+		Timestamp: int64(client.timestamp),
+	})
+	log.Printf("Participant %d joined the Chitty-chat server at port %d\n", client.id, *serverPort)
+
+	client.timestamp++ //They joined, so the timestamp is updated
 
 	for scanner.Scan() {
 		input := scanner.Text()
@@ -80,16 +82,6 @@ func sendMessage(client *Client) {
 			log.Printf("Message is too big (maximum length 128 characters)")
 			continue //Starts the for loop from scratch
 		}
-
-		/*
-			// To ensure that a string is a valid message with a maximum length of 128 characters
-			if utf8.RuneCountInString(input) <= 128 {
-				//Sends message timestamp++
-			} else {
-				log.Printf("Message is too big (maximum length 128 characters)")
-				continue //Starts the for loop from scratch
-			}
-		*/
 
 		//Sends message timestamp++
 		client.timestamp++
@@ -126,9 +118,54 @@ func (client *Client) AskForBroadcast(ctx context.Context, in *proto.PublishMess
 	return nil, nil
 }
 
+/*
 func receiveMessage(client *Client, serverConnection proto.PublishClient) {
 	//PRINT (Client received the message: *** at lamport timestamp)
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*
 func leaveChat() {

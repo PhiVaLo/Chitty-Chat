@@ -17,7 +17,15 @@ message BroadcastMessage {
     string message = 2;
 }
 
+message JoinOrLeaveMessage {
+    int64 clientId = 1;
+    int64 timestamp = 2;
+    int64 port = 3;
+}
+
 service Publish {
     rpc AskForPublish(PublishMessage) returns (BroadcastMessage);
+    rpc AskToJoin(JoinOrLeaveMessage) returns (google.protobuf.Empty);
+    rpc AskToLeave(JoinOrLeaveMessage) returns (google.protobuf.Empty);
     rpc AskForBroadcast(PublishMessage) returns (google.protobuf.Empty);
 }

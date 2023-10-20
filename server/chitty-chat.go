@@ -4,10 +4,13 @@ import (
 	"LogicalTime/proto"
 	"context"
 	"flag"
-	"google.golang.org/grpc"
 	"log"
 	"net"
+	"os/exec"
 	"strconv"
+
+	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/emptypb"
 	// "fmt"
 )
 
@@ -17,7 +20,12 @@ type Server struct {
 	name      string
 	port      int
 	timestamp int
-	clients   map[int]proto.PublishClient
+	clients   map[int]*miniClient
+}
+
+type miniClient struct {
+	id    int
+	port  int
 }
 
 // Used to get the user-defined port for the server from the command line
@@ -32,7 +40,7 @@ func main() {
 		name:      "Chitty-Chat",
 		port:      *port,
 		timestamp: 0,
-		clients: make(map[int]proto.PublishClient),
+		clients: make(map[int]*miniClient),
 	}
 
 	// Start the server
@@ -64,17 +72,25 @@ func startServer(server *Server) {
 	}
 }
 
-func AskToJoin() {
-	//Broadcast the joining participant to all existing participants
-}
-
-func (server *Server) AddClientToServer(clientID int, client proto.PublishClient) {
-	server.clients[clientID] = client
+func (server *Server) AddClientToServer(client *miniClient) {
+	server.clients[client.id] = client
 }
 
 func (server *Server) RemoveClientFromServer(clientID int) {
-	server.clients[clientID] = nil
+	// remove clientID from the map
+	delete(server.clients, clientID)
 }
+func (server *Server) BroadcastMessageToClients(message *proto.PublishMessage, ignoreId int) {
+    for id, client := range server.clients {
+        if client != nil && client.id != ignoreId {
+            go func(c *miniClient) {
+                c.AskForBroadcast(context.Background(), message)
+
+            }(client)
+        }
+    }
+}
+
 
 func (server *Server) AskForPublish(ctx context.Context, in *proto.PublishMessage) (*proto.BroadcastMessage, error) {
 	//Server receives the message therefore timestamp++
@@ -83,31 +99,113 @@ func (server *Server) AskForPublish(ctx context.Context, in *proto.PublishMessag
 	}
 	server.timestamp++
 
-	//PRINT (Participant x send the message: *** at lamport timestamp)
+	//Server prints in terminal for us to see
 	log.Printf("Participant %d send the message: %s at lamport timestamp %d \n", in.ClientId, in.Message, server.timestamp)
 
-	//Broadcast to the rest of the participants
-	//TODO: Broadcast statement to all clients except the one who originally send it
+	//Sends the message to the rest of the participants, except the one who originally send it
 	for id, client := range server.clients {
 		if id != int(in.ClientId) && client != nil {
-			server.timestamp++ //Timestamp go up for everytime its send
-			msg := &proto.PublishMessage{
+			server.timestamp++ //Timestamp go up for every event (so for every client its send to)
+			msg := &proto.PublishMessage{ //We only send the information, not the entire string
 				ClientId:  int64(in.ClientId),
 				Timestamp: int64(server.timestamp),
 				Message:   in.Message,
 			}
-
-			client.AskForBroadcast(context.Background(), msg)
+			// Skal omskrives da clients map er en ministruct
+			client.AskForBroadcast(context.Background(), msg) //Sends the information to the clients
 		}
 	}
 
-	//Sends statement to original client
-	server.timestamp++
+	//Sends message to the original client
+	server.timestamp++ //Timestamp goes up, since server creates an event
 	return &proto.BroadcastMessage{
 		Timestamp: int64(server.timestamp),
 		Message:   in.Message,
 	}, nil
 }
+
+func (server *Server) AskToJoin(ctx context.Context, in *proto.JoinOrLeaveMessage) (*emptypb.Empty, error) {
+	//Broadcast the joining participant to all existing participants
+
+	//Add client to server (map)
+	miniclient := &miniClient{
+		id:     int(in.ClientId),
+		port:   int(in.Port),
+	}
+	
+	server.AddClientToServer(miniclient);
+
+	//Client aleady prints the joined message to itself
+
+	return nil, nil
+}
+
+func (server *Server) AskToLeave(ctx context.Context, in *proto.JoinOrLeaveMessage) (*emptypb.Empty, error){
+	server.timestamp++; //Server recieves that a client leaves
+	
+	if(server.clients == nil){ //If list of clients is empty
+		return nil, nil
+	} else {
+		//Send message to all remaining participants
+		//"Participant x left the server at lamport timestamp: x"
+	}
+	
+	//Remove client from the server
+	server.RemoveClientFromServer(int(in.ClientId))
+	
+	return nil, nil
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*
 	func (server *Server) participantLeft(ctx context.Context, in *proto.PublishMessage) (*proto.TimeMessage, error){
