@@ -19,8 +19,5 @@ message BroadcastMessage {
 
 service Publish {
     rpc AskForPublish(PublishMessage) returns (BroadcastMessage);
-}
-
-service Broadcast {
     rpc AskForBroadcast(PublishMessage) returns (google.protobuf.Empty);
 }

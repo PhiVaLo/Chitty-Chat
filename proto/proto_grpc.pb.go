@@ -20,7 +20,8 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Publish_AskForPublish_FullMethodName = "/proto.Publish/AskForPublish"
+	Publish_AskForPublish_FullMethodName   = "/proto.Publish/AskForPublish"
+	Publish_AskForBroadcast_FullMethodName = "/proto.Publish/AskForBroadcast"
 )
 
 // PublishClient is the client API for Publish service.
@@ -28,6 +29,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PublishClient interface {
 	AskForPublish(ctx context.Context, in *PublishMessage, opts ...grpc.CallOption) (*BroadcastMessage, error)
+	AskForBroadcast(ctx context.Context, in *PublishMessage, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type publishClient struct {
@@ -47,11 +49,21 @@ func (c *publishClient) AskForPublish(ctx context.Context, in *PublishMessage, o
 	return out, nil
 }
 
+func (c *publishClient) AskForBroadcast(ctx context.Context, in *PublishMessage, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, Publish_AskForBroadcast_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PublishServer is the server API for Publish service.
 // All implementations must embed UnimplementedPublishServer
 // for forward compatibility
 type PublishServer interface {
 	AskForPublish(context.Context, *PublishMessage) (*BroadcastMessage, error)
+	AskForBroadcast(context.Context, *PublishMessage) (*emptypb.Empty, error)
 	mustEmbedUnimplementedPublishServer()
 }
 
@@ -61,6 +73,9 @@ type UnimplementedPublishServer struct {
 
 func (UnimplementedPublishServer) AskForPublish(context.Context, *PublishMessage) (*BroadcastMessage, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AskForPublish not implemented")
+}
+func (UnimplementedPublishServer) AskForBroadcast(context.Context, *PublishMessage) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AskForBroadcast not implemented")
 }
 func (UnimplementedPublishServer) mustEmbedUnimplementedPublishServer() {}
 
@@ -93,6 +108,24 @@ func _Publish_AskForPublish_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Publish_AskForBroadcast_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PublishMessage)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PublishServer).AskForBroadcast(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Publish_AskForBroadcast_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PublishServer).AskForBroadcast(ctx, req.(*PublishMessage))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Publish_ServiceDesc is the grpc.ServiceDesc for Publish service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -104,95 +137,9 @@ var Publish_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "AskForPublish",
 			Handler:    _Publish_AskForPublish_Handler,
 		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/proto.proto",
-}
-
-const (
-	Broadcast_AskForBroadcast_FullMethodName = "/proto.Broadcast/AskForBroadcast"
-)
-
-// BroadcastClient is the client API for Broadcast service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type BroadcastClient interface {
-	AskForBroadcast(ctx context.Context, in *PublishMessage, opts ...grpc.CallOption) (*emptypb.Empty, error)
-}
-
-type broadcastClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewBroadcastClient(cc grpc.ClientConnInterface) BroadcastClient {
-	return &broadcastClient{cc}
-}
-
-func (c *broadcastClient) AskForBroadcast(ctx context.Context, in *PublishMessage, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, Broadcast_AskForBroadcast_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// BroadcastServer is the server API for Broadcast service.
-// All implementations must embed UnimplementedBroadcastServer
-// for forward compatibility
-type BroadcastServer interface {
-	AskForBroadcast(context.Context, *PublishMessage) (*emptypb.Empty, error)
-	mustEmbedUnimplementedBroadcastServer()
-}
-
-// UnimplementedBroadcastServer must be embedded to have forward compatible implementations.
-type UnimplementedBroadcastServer struct {
-}
-
-func (UnimplementedBroadcastServer) AskForBroadcast(context.Context, *PublishMessage) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AskForBroadcast not implemented")
-}
-func (UnimplementedBroadcastServer) mustEmbedUnimplementedBroadcastServer() {}
-
-// UnsafeBroadcastServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to BroadcastServer will
-// result in compilation errors.
-type UnsafeBroadcastServer interface {
-	mustEmbedUnimplementedBroadcastServer()
-}
-
-func RegisterBroadcastServer(s grpc.ServiceRegistrar, srv BroadcastServer) {
-	s.RegisterService(&Broadcast_ServiceDesc, srv)
-}
-
-func _Broadcast_AskForBroadcast_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PublishMessage)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(BroadcastServer).AskForBroadcast(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Broadcast_AskForBroadcast_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BroadcastServer).AskForBroadcast(ctx, req.(*PublishMessage))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// Broadcast_ServiceDesc is the grpc.ServiceDesc for Broadcast service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var Broadcast_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.Broadcast",
-	HandlerType: (*BroadcastServer)(nil),
-	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "AskForBroadcast",
-			Handler:    _Broadcast_AskForBroadcast_Handler,
+			Handler:    _Publish_AskForBroadcast_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
