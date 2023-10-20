@@ -63,6 +63,10 @@ func startServer(server *Server) {
 	}
 }
 
+func AskToJoin() {
+	//Broadcast the joining participant to all existing participants
+}
+
 func (server *Server) AddClientToServer(clientID int, client proto.PublishClient) {
 	server.clients[clientID] = client
 }
@@ -85,13 +89,13 @@ func (server *Server) AskForPublish(ctx context.Context, in *proto.PublishMessag
 	//TODO: Broadcast statement to all clients except the one who originally send it
 	for id, client := range server.clients {
 		if id != int(in.ClientId) && client != nil {
-			server.timestamp++
+			server.timestamp++ //Timestamp go up for everytime its send
 			msg := &proto.BroadcastMessage{
 				Timestamp: int64(server.timestamp),
 				Message:   in.Message,
 			}
 
-			//client.BroadcastMessage(context.Background(), msg)
+			client.AskForBroadcast(context.Background(), msg)
 		}
 	}
 

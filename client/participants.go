@@ -81,7 +81,9 @@ func sendMessage(client *Client) {
 
 		/*
 			// To ensure that a string is a valid message with a maximum length of 128 characters
-			if utf8.RuneCountInString(input) > 128 {
+			if utf8.RuneCountInString(input) <= 128 {
+				//Sends message timestamp++
+			} else {
 				log.Printf("Message is too big (maximum length 128 characters)")
 				continue //Starts the for loop from scratch
 			}
@@ -108,6 +110,11 @@ func sendMessage(client *Client) {
 		}
 		client.timestamp++
 	}
+}
+
+func (client *Client) AskForBroadcast(ctx context.Context, in *proto.BroadcastMessage) (*proto.BroadcastMessage, error) {
+	
+	return nil, nil
 }
 
 func receiveMessage(client *Client, serverConnection proto.PublishClient) {

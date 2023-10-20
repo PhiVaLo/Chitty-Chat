@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/empty.proto";
+
 package proto;
 
 option go_package = "proto/proto";
@@ -17,4 +19,8 @@ message BroadcastMessage {
 
 service Publish {
     rpc AskForPublish(PublishMessage) returns (BroadcastMessage);
+}
+
+service Broadcast {
+    rpc AskForBroadcast(BroadcastMessage) returns (google.protobuf.Empty);
 }
