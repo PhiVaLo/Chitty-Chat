@@ -32,12 +32,15 @@ func main() {
 
 	// TODO
 	// Each client has a unique ID
-	newID := shared.GetGlobalId() + 1
-	shared.SetGlobalId(newID)
+	// newID := shared.GetGlobalId() + 1
+	// shared.SetGlobalId(newID)
+	// shared.IncrementGlobalID()
+	// Generate a unique client ID
+	clientID := shared.GenerateUniqueClientID()
 
 	// Create a client
 	client := &Client{
-		id:         newID,
+		id:         clientID,
 		portNumber: *clientPort,
 		timestamp:  0,
 	}
