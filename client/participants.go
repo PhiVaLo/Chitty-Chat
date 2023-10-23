@@ -2,7 +2,6 @@ package main
 
 import (
 	"LogicalTime/proto"
-	"LogicalTime/shared"
 	"bufio"
 	"context"
 	"flag"
@@ -24,6 +23,7 @@ type Client struct {
 var (
 	clientPort = flag.Int("cPort", 0, "client port number")
 	serverPort = flag.Int("sPort", 0, "server port number (should match the port used for the server)")
+	clientID   = flag.Int("id", 0, "clientID should be unique")
 )
 
 func main() {
@@ -36,11 +36,11 @@ func main() {
 	// shared.SetGlobalId(newID)
 	// shared.IncrementGlobalID()
 	// Generate a unique client ID
-	clientID := shared.GenerateUniqueClientID()
+	//clientID := shared.GenerateUniqueClientID()
 
 	// Create a client
 	client := &Client{
-		id:         clientID,
+		id:         *clientID,
 		portNumber: *clientPort,
 		timestamp:  0,
 	}
