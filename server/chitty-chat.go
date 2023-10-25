@@ -4,14 +4,16 @@ import (
 	"LogicalTime/proto"
 	"context"
 	"flag"
-	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"net"
 	"strconv"
 
+	"google.golang.org/grpc/credentials/insecure"
+
+	"sync"
+
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"sync"
 	// "fmt"
 )
 
@@ -104,7 +106,7 @@ func (server *Server) AskForPublish(ctx context.Context, in *proto.PublishMessag
 	server.timestamp++
 
 	//Server prints in terminal for us to see
-	log.Printf("Participant %d send the message: %s at lamport timestamp %d \n", in.ClientId, in.Message, server.timestamp)
+	log.Printf("Participant %d sends the message: %s - at lamport timestamp %d \n", in.ClientId, in.Message, server.timestamp)
 
 	var wg sync.WaitGroup //Add waitgroup
 	for id, port := range server.clients {

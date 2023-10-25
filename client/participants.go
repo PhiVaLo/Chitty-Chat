@@ -5,7 +5,6 @@ import (
 	"bufio"
 	"context"
 	"flag"
-	"google.golang.org/protobuf/types/known/emptypb"
 	"log"
 	"net"
 	"os"
@@ -13,6 +12,8 @@ import (
 	"strconv"
 	"sync"
 	"syscall"
+
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -132,7 +133,7 @@ func sendMessage(client *Client, serverConnection proto.PublishClient) {
 
 		//Sends message timestamp++
 		client.timestamp++
-		log.Printf("Participant sends the message: %s at the time %d \n", input, client.timestamp)
+		log.Printf("Participant sends the message: %s - at lamport timestamp %d \n", input, client.timestamp)
 
 		// Ask the server to publish the message
 		/*broadcastReturnMessage, err :=*/
@@ -161,7 +162,7 @@ func (client *Client) AskForMessageBroadcast(ctx context.Context, in *proto.Publ
 	}
 	client.timestamp++
 
-	log.Printf("Client #%d send the message: %s at lamport timestamp %d \n", in.ClientId, in.Message, client.timestamp)
+	log.Printf("Client #%d sends the message: %s - at lamport timestamp %d \n", in.ClientId, in.Message, client.timestamp)
 
 	return &emptypb.Empty{}, nil
 }
