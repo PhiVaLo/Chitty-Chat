@@ -190,6 +190,9 @@ func (server *Server) AskToLeave(ctx context.Context, in *proto.JoinOrLeaveMessa
 	}
 	server.timestamp++
 
+	//Remove client from the server
+	server.RemoveClientFromServer(int(in.Port))
+
 	if len(server.clients) < 2 { //If list of clients only contain the leaving participant or less
 		return nil, nil
 	} else {
@@ -216,9 +219,6 @@ func (server *Server) AskToLeave(ctx context.Context, in *proto.JoinOrLeaveMessa
 		}
 		wg.Wait()
 	}
-
-	//Remove client from the server
-	server.RemoveClientFromServer(int(in.Port))
 
 	return &emptypb.Empty{}, nil
 }

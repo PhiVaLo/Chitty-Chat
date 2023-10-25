@@ -9,7 +9,9 @@ import (
 	"log"
 	"net"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -42,12 +44,24 @@ func main() {
 	// Starts client as a grpc server for listening capabilities
 	go startClient(client)
 
-	// Wait for the client (user) to send message
-	go sendMessage(client)
+	//Connects to server
+	serverConnection, _ := connectToServer(client)
 
-	// Keep the client running
-	for {
-	}
+	// Wait for the client (user) to send message
+	go sendMessage(client, serverConnection)
+
+	// Keep the client running / Wait for shutdown
+	signalChannel := make(chan os.Signal, 1)
+	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM) //Notifies the channel when ctrl+c is pressed or the terminal is interrupted
+
+	<-signalChannel //Waits for the channel to receive a signal
+
+	//Asks the server to leave
+	serverConnection.AskToLeave(context.Background(), &proto.JoinOrLeaveMessage{
+		ClientId:  int64(client.id),
+		Timestamp: int64(client.timestamp),
+		Port:      int64(client.portNumber),
+	})
 }
 
 func startClient(client *Client) {
@@ -81,12 +95,12 @@ func connectToServer(client *Client) (proto.PublishClient, error) {
 	return proto.NewPublishClient(conn), nil
 }
 
-func sendMessage(client *Client) {
+func sendMessage(client *Client, serverConnection proto.PublishClient) {
 	// Wait for input in the client terminal
 	scanner := bufio.NewScanner(os.Stdin)
 
 	//Connects to server
-	serverConnection, _ := connectToServer(client)
+	//serverConnection, _ := connectToServer(client)
 
 	serverConnection.AskToJoin(context.Background(), &proto.JoinOrLeaveMessage{
 		ClientId:  int64(client.id),
