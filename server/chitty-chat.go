@@ -35,7 +35,7 @@ func main() {
 	server := &Server{
 		name:      "Chitty-Chat",
 		port:      *port,
-		timestamp: 0,
+		timestamp: 1,
 		clients:   make([]int, 0),
 	}
 
@@ -58,7 +58,8 @@ func startServer(server *Server) {
 	if err != nil {
 		log.Fatalf("Could not create the server %v", err)
 	}
-	log.Printf("Started server at port: %d\n", server.port)
+
+	log.Printf("Started server at port: %d ; lamport timestamp %d \n", server.port, server.timestamp)
 
 	// Register the grpc server and serve its listener
 	proto.RegisterPublishServer(grpcServer, server)

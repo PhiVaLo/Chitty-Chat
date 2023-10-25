@@ -10,9 +10,9 @@ go run ./server/chitty-chat.go -port 5454
 Terminal-N (client):
 
 ```bash
-go run ./client/participants.go -cPort 8080 -sPort 5454
-go run ./client/participants.go -cPort 8081 -sPort 5454
-go run ./client/participants.go -cPort 8082 -sPort 5454
+go run ./client/participants.go -cPort 8080 -sPort 5454 -id 1
+go run ./client/participants.go -cPort 8081 -sPort 5454 -id 2
+go run ./client/participants.go -cPort 8082 -sPort 5454 -id 3
 ```
 
 Generate proto files:

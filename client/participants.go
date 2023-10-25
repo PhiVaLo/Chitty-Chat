@@ -38,7 +38,7 @@ func main() {
 	client := &Client{
 		id:         *clientID,
 		portNumber: *clientPort,
-		timestamp:  0,
+		timestamp:  1,
 	}
 
 	// Starts client as a grpc server for listening capabilities
@@ -75,7 +75,8 @@ func startClient(client *Client) {
 	if err != nil {
 		log.Fatalf("Could not create the client %v", err)
 	}
-	log.Printf("Started client at port: %d\n", client.portNumber)
+
+	log.Printf("Started client at port: %d ; lamport timestamp %d \n", client.portNumber, client.timestamp)
 
 	// Register the grpc server and serve its listener
 	proto.RegisterBroadcastServer(grpcServer, client)
@@ -107,9 +108,9 @@ func sendMessage(client *Client, serverConnection proto.PublishClient) {
 		Timestamp: int64(client.timestamp),
 		Port:      int64(client.portNumber),
 	})
-	log.Printf("Participant %d joined the Chitty-chat server at port %d\n", client.id, *serverPort)
 
 	client.timestamp++ //They joined, so the timestamp is updated
+	log.Printf("Participant %d joined the Chitty-chat server at port %d at timestamp %d \n", client.id, *serverPort, client.timestamp)
 
 	for scanner.Scan() {
 		input := scanner.Text()
@@ -150,7 +151,7 @@ func (client *Client) AskForMessageBroadcast(ctx context.Context, in *proto.Publ
 	}
 	client.timestamp++
 
-	log.Printf("Participant %d send the message: %s at lamport timestamp %d \n", in.ClientId, in.Message, client.timestamp)
+	log.Printf("Server sends: Participant %d send the message: %s at lamport timestamp %d \n", in.ClientId, in.Message, client.timestamp)
 
 	return &emptypb.Empty{}, nil
 }
@@ -162,7 +163,7 @@ func (client *Client) AskForJoinBroadcast(ctx context.Context, in *proto.JoinOrL
 	}
 	client.timestamp++
 
-	log.Printf("Participant %d joined at lamport timestamp %d \n", in.ClientId, client.timestamp)
+	log.Printf("Server sends: Participant %d joined at lamport timestamp %d \n", in.ClientId, client.timestamp)
 
 	return &emptypb.Empty{}, nil
 }
@@ -174,7 +175,7 @@ func (client *Client) AskForLeaveBroadcast(ctx context.Context, in *proto.JoinOr
 	}
 	client.timestamp++
 
-	log.Printf("Participant %d left at lamport timestamp %d \n", in.ClientId, client.timestamp)
+	log.Printf("Server sends: Participant %d left at lamport timestamp %d \n", in.ClientId, client.timestamp)
 
 	return &emptypb.Empty{}, nil
 }
