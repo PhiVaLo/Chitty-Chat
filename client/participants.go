@@ -6,6 +6,7 @@ import (
 	"context"
 	"flag"
 	"log"
+	"net"
 	"os"
 	"strconv"
 
@@ -14,10 +15,10 @@ import (
 )
 
 type Client struct {
+	proto.UnimplementedBroadcastServer
 	id         int
 	portNumber int
 	timestamp  int
-	serverConn proto.PublishClient
 }
 
 var (
@@ -30,14 +31,6 @@ func main() {
 	// Parse the flags to get the port for the client
 	flag.Parse()
 
-	// TODO
-	// Each client has a unique ID
-	// newID := shared.GetGlobalId() + 1
-	// shared.SetGlobalId(newID)
-	// shared.IncrementGlobalID()
-	// Generate a unique client ID
-	//clientID := shared.GenerateUniqueClientID()
-
 	// Create a client
 	client := &Client{
 		id:         *clientID,
@@ -45,11 +38,35 @@ func main() {
 		timestamp:  0,
 	}
 
+	// Starts client as a grpc server for listening capabilities
+	go startClient(client)
+
 	// Wait for the client (user) to send message
 	go sendMessage(client)
 
 	// Keep the client running
 	for {
+	}
+}
+
+func startClient(client *Client) {
+	// Create a new grpc server
+	grpcServer := grpc.NewServer()
+
+	// Make the server listen at the given port (convert int port to string)
+	listener, err := net.Listen("tcp", ":"+strconv.Itoa(client.portNumber))
+
+	// Error handling if client could not be created
+	if err != nil {
+		log.Fatalf("Could not create the client %v", err)
+	}
+	log.Printf("Started client at port: %d\n", client.portNumber)
+
+	// Register the grpc server and serve its listener
+	proto.RegisterBroadcastServer(grpcServer, client)
+	serveError := grpcServer.Serve(listener)
+	if serveError != nil {
+		log.Fatalf("Could not serve listener")
 	}
 }
 
