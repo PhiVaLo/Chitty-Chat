@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"sync"
 	"syscall"
 
 	"google.golang.org/grpc"
@@ -41,8 +42,12 @@ func main() {
 		timestamp:  1,
 	}
 
+	var wg sync.WaitGroup //Add waitgroup
+
 	// Starts client as a grpc server for listening capabilities
-	go startClient(client)
+	wg.Add(1)
+	go startClient(client, &wg)
+	wg.Wait()
 
 	//Connects to server
 	serverConnection, _ := connectToServer(client)
@@ -57,6 +62,9 @@ func main() {
 	<-signalChannel //Waits for the channel to receive a signal
 
 	//Asks the server to leave
+	client.timestamp++
+	log.Printf("This client left the server at lamport timestamp %d \n", client.timestamp)
+
 	serverConnection.AskToLeave(context.Background(), &proto.JoinOrLeaveMessage{
 		ClientId:  int64(client.id),
 		Timestamp: int64(client.timestamp),
@@ -64,7 +72,7 @@ func main() {
 	})
 }
 
-func startClient(client *Client) {
+func startClient(client *Client, wg *sync.WaitGroup) {
 	// Create a new grpc server
 	grpcServer := grpc.NewServer()
 
@@ -77,6 +85,7 @@ func startClient(client *Client) {
 	}
 
 	log.Printf("Started client at port: %d ; lamport timestamp %d \n", client.portNumber, client.timestamp)
+	wg.Done()
 
 	// Register the grpc server and serve its listener
 	proto.RegisterBroadcastServer(grpcServer, client)
@@ -102,6 +111,8 @@ func sendMessage(client *Client, serverConnection proto.PublishClient) {
 
 	//Connects to server
 	//serverConnection, _ := connectToServer(client)
+	client.timestamp++
+	log.Printf("Client #%d asks to join the server at lamport timestamp %d \n", client.id, client.timestamp)
 
 	serverConnection.AskToJoin(context.Background(), &proto.JoinOrLeaveMessage{
 		ClientId:  int64(client.id),
@@ -109,8 +120,7 @@ func sendMessage(client *Client, serverConnection proto.PublishClient) {
 		Port:      int64(client.portNumber),
 	})
 
-	client.timestamp++ //They joined, so the timestamp is updated
-	log.Printf("Participant %d joined the Chitty-chat server at port %d at timestamp %d \n", client.id, *serverPort, client.timestamp)
+	//client.timestamp++ //They joined, so the timestamp is updated
 
 	for scanner.Scan() {
 		input := scanner.Text()
@@ -151,7 +161,7 @@ func (client *Client) AskForMessageBroadcast(ctx context.Context, in *proto.Publ
 	}
 	client.timestamp++
 
-	log.Printf("Server sends: Participant %d send the message: %s at lamport timestamp %d \n", in.ClientId, in.Message, client.timestamp)
+	log.Printf("Client #%d send the message: %s at lamport timestamp %d \n", in.ClientId, in.Message, client.timestamp)
 
 	return &emptypb.Empty{}, nil
 }
@@ -163,7 +173,7 @@ func (client *Client) AskForJoinBroadcast(ctx context.Context, in *proto.JoinOrL
 	}
 	client.timestamp++
 
-	log.Printf("Server sends: Participant %d joined at lamport timestamp %d \n", in.ClientId, client.timestamp)
+	log.Printf("Client #%d joined at lamport timestamp %d \n", in.ClientId, client.timestamp)
 
 	return &emptypb.Empty{}, nil
 }
@@ -175,7 +185,7 @@ func (client *Client) AskForLeaveBroadcast(ctx context.Context, in *proto.JoinOr
 	}
 	client.timestamp++
 
-	log.Printf("Server sends: Participant %d left at lamport timestamp %d \n", in.ClientId, client.timestamp)
+	log.Printf("Client #%d left the server at lamport timestamp %d \n", in.ClientId, client.timestamp)
 
 	return &emptypb.Empty{}, nil
 }
