@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"context"
 	"flag"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"log"
 	"net"
 	"os"
@@ -128,7 +129,7 @@ func sendMessage(client *Client) {
 	}
 }
 
-func (client *Client) AskForMessageBroadcast(ctx context.Context, in *proto.PublishMessage) (*proto.BroadcastMessage, error) {
+func (client *Client) AskForMessageBroadcast(ctx context.Context, in *proto.PublishMessage) (*emptypb.Empty, error) {
 	//Client receives the message therefore timestamp++
 	if client.timestamp < int(in.Timestamp) {
 		client.timestamp = int(in.Timestamp)
@@ -137,10 +138,10 @@ func (client *Client) AskForMessageBroadcast(ctx context.Context, in *proto.Publ
 
 	log.Printf("Participant %d send the message: %s at lamport timestamp %d \n", in.ClientId, in.Message, client.timestamp)
 
-	return nil, nil
+	return &emptypb.Empty{}, nil
 }
 
-func (client *Client) AskForJoinBroadcast(ctx context.Context, in *proto.JoinOrLeaveMessage) (*proto.BroadcastMessage, error) {
+func (client *Client) AskForJoinBroadcast(ctx context.Context, in *proto.JoinOrLeaveMessage) (*emptypb.Empty, error) {
 	//Client receives the message therefore timestamp++
 	if client.timestamp < int(in.Timestamp) {
 		client.timestamp = int(in.Timestamp)
@@ -149,10 +150,10 @@ func (client *Client) AskForJoinBroadcast(ctx context.Context, in *proto.JoinOrL
 
 	log.Printf("Participant %d joined at lamport timestamp %d \n", in.ClientId, client.timestamp)
 
-	return nil, nil
+	return &emptypb.Empty{}, nil
 }
 
-func (client *Client) AskForLeaveBroadcast(ctx context.Context, in *proto.JoinOrLeaveMessage) (*proto.BroadcastMessage, error) {
+func (client *Client) AskForLeaveBroadcast(ctx context.Context, in *proto.JoinOrLeaveMessage) (*emptypb.Empty, error) {
 	//Client receives the message therefore timestamp++
 	if client.timestamp < int(in.Timestamp) {
 		client.timestamp = int(in.Timestamp)
@@ -161,7 +162,7 @@ func (client *Client) AskForLeaveBroadcast(ctx context.Context, in *proto.JoinOr
 
 	log.Printf("Participant %d left at lamport timestamp %d \n", in.ClientId, client.timestamp)
 
-	return nil, nil
+	return &emptypb.Empty{}, nil
 }
 
 /*

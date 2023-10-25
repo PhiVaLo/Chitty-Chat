@@ -4,6 +4,7 @@ import (
 	"LogicalTime/proto"
 	"context"
 	"flag"
+	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"net"
 	"strconv"
@@ -20,7 +21,7 @@ type Server struct {
 	name      string
 	port      int
 	timestamp int
-	clients   map[int]proto.PublishClient
+	clients   []int
 }
 
 // Used to get the user-defined port for the server from the command line
@@ -35,7 +36,7 @@ func main() {
 		name:      "Chitty-Chat",
 		port:      *port,
 		timestamp: 0,
-		clients: make(map[int]proto.PublishClient),
+		clients:   make([]int, 0),
 	}
 
 	// Start the server
@@ -67,18 +68,40 @@ func startServer(server *Server) {
 	}
 }
 
-func (server *Server) AddClientToServer(clientId int, client proto.PublishClient) {
-	_, exists := server.clients[clientId]
-	if(!exists) {
-		server.clients[clientId] = client
-	} else {
-		log.Fatalf("Client with id %d already exists", clientId)
-	}	
+func connectToClient(port int) (proto.BroadcastClient, error) {
+	// Dial the server at the specified port.
+	conn, err := grpc.Dial("localhost:"+strconv.Itoa(port), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Could not connect to port %d", port)
+	}
+
+	return proto.NewBroadcastClient(conn), nil
 }
 
-func (server *Server) RemoveClientFromServer(clientID int) {
+func (server *Server) AddClientToServer(clientPort int) {
+	//Checks if the client port is already added
+	exists := false
+	for _, port := range server.clients {
+		if port == clientPort {
+			exists = true
+		}
+	}
+
+	//Adds the clientport if it does not already exist
+	if !exists {
+		server.clients = append(server.clients, clientPort)
+	} else {
+		log.Fatalf("Client with port %d already exists", clientPort)
+	}
+}
+
+func (server *Server) RemoveClientFromServer(clientPort int) {
 	// remove clientID from the map
-	delete(server.clients, clientID)
+	for index, port := range server.clients {
+		if port == clientPort {
+			server.clients[index] = -1
+		}
+	}
 }
 
 func (server *Server) AskForPublish(ctx context.Context, in *proto.PublishMessage) (*emptypb.Empty, error) {
@@ -92,8 +115,8 @@ func (server *Server) AskForPublish(ctx context.Context, in *proto.PublishMessag
 	log.Printf("Participant %d send the message: %s at lamport timestamp %d \n", in.ClientId, in.Message, server.timestamp)
 
 	var wg sync.WaitGroup //Add waitgroup
-	for _, client := range server.clients {
-        if client != nil /*&& id != int(in.ClientId)*/ {
+	for _, port := range server.clients {
+		if port > 0 /*&& id != int(in.ClientId)*/ {
 			server.timestamp++ //Timestamp go up for every event (so for every client its send to)
 
 			msg := &proto.PublishMessage{ //We only send the information, not the entire string
@@ -101,16 +124,19 @@ func (server *Server) AskForPublish(ctx context.Context, in *proto.PublishMessag
 				Timestamp: int64(server.timestamp),
 				Message:   in.Message,
 			}
-		
+
 			wg.Add(1)
-            go func(c proto.PublishClient) {
-                c.AskForMessageBroadcast(context.Background(), msg)
+
+			clientConn, _ := connectToClient(port)
+
+			go func(c proto.BroadcastClient) {
+				c.AskForMessageBroadcast(context.Background(), msg)
 				defer wg.Done()
-            }(client)
-        }
-    }
+			}(clientConn)
+		}
+	}
 	wg.Wait()
-	
+
 	/* Remove return
 	//Sends message to the original client
 	server.timestamp++ //Timestamp goes up, since server creates an event
@@ -128,126 +154,74 @@ func (server *Server) AskToJoin(ctx context.Context, in *proto.JoinOrLeaveMessag
 	}
 	server.timestamp++
 
-	//Creates a connection to the client
-	conn, err := grpc.Dial("localhost:"+strconv.Itoa(int(in.Port)), grpc.WithInsecure())
-    if err != nil {
-		log.Fatalf("Could not connect to client: %v", err)
-    }
-	clientConnection := proto.NewPublishClient(conn)
-	
 	//Adds the client connection to the map
-	server.AddClientToServer(int(in.ClientId), clientConnection);
+	server.AddClientToServer(int(in.Port))
 
 	//Broadcast the joining participant to all existing clients
 	var wg sync.WaitGroup //Add waitgroup
-	for _, client := range server.clients {
-        if client != nil /*&& id != int(in.ClientId)*/ {
+	for _, port := range server.clients {
+		if port > 0 /*&& id != int(in.ClientId)*/ {
 			server.timestamp++ //Timestamp go up for every event (so for every client it is send to)
 
 			msg := &proto.JoinOrLeaveMessage{ //We only send the information, not the entire string
 				ClientId:  int64(in.ClientId),
 				Timestamp: int64(server.timestamp),
 			}
-			
-			wg.Add(1) 
-            go func(c proto.PublishClient) {
-                c.AskForJoinBroadcast(context.Background(), msg)
+
+			wg.Add(1)
+
+			clientConn, _ := connectToClient(port)
+
+			go func(c proto.BroadcastClient) {
+				c.AskForJoinBroadcast(context.Background(), msg)
 				defer wg.Done()
-            }(client)
-        }
-    }
+			}(clientConn)
+		}
+	}
 	wg.Wait()
 
 	return &emptypb.Empty{}, nil
 }
 
-func (server *Server) AskToLeave(ctx context.Context, in *proto.JoinOrLeaveMessage) (*emptypb.Empty, error){
+func (server *Server) AskToLeave(ctx context.Context, in *proto.JoinOrLeaveMessage) (*emptypb.Empty, error) {
 	//Server receives the message therefore timestamp++
-	if(server.timestamp < int(in.Timestamp)) {
+	if server.timestamp < int(in.Timestamp) {
 		server.timestamp = int(in.Timestamp)
 	}
-	server.timestamp++;
-	
-	if(len(server.clients) < 2){ //If list of clients only contain the leaving participant or less
+	server.timestamp++
+
+	if len(server.clients) < 2 { //If list of clients only contain the leaving participant or less
 		return nil, nil
 	} else {
-		//Send message to all remaining clients		
+		//Send message to all remaining clients
 		var wg sync.WaitGroup //Add waitgroup
-		for _, client := range server.clients {
-			if client != nil /*&& id != int(in.ClientId)*/ {
+		for _, port := range server.clients {
+			if port > 0 /*&& id != int(in.ClientId)*/ {
 				server.timestamp++ //Timestamp go up for every event (so for every client it is send to)
-	
+
 				msg := &proto.JoinOrLeaveMessage{ //We only send the information, not the entire string
 					ClientId:  int64(in.ClientId),
 					Timestamp: int64(server.timestamp),
 				}
-				
+
 				wg.Add(1)
-				go func(c proto.PublishClient) {
+
+				clientConn, _ := connectToClient(port)
+
+				go func(c proto.BroadcastClient) {
 					c.AskForLeaveBroadcast(context.Background(), msg)
 					defer wg.Done()
-				}(client)
+				}(clientConn)
 			}
 		}
 		wg.Wait()
 	}
-	
+
 	//Remove client from the server
-	server.RemoveClientFromServer(int(in.ClientId))
-	
+	server.RemoveClientFromServer(int(in.Port))
+
 	return &emptypb.Empty{}, nil
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /*
 	func (server *Server) participantLeft(ctx context.Context, in *proto.PublishMessage) (*proto.TimeMessage, error){
