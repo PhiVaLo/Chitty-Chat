@@ -20,12 +20,9 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Publish_AskForPublish_FullMethodName          = "/proto.Publish/AskForPublish"
-	Publish_AskToJoin_FullMethodName              = "/proto.Publish/AskToJoin"
-	Publish_AskToLeave_FullMethodName             = "/proto.Publish/AskToLeave"
-	Publish_AskForMessageBroadcast_FullMethodName = "/proto.Publish/AskForMessageBroadcast"
-	Publish_AskForJoinBroadcast_FullMethodName    = "/proto.Publish/AskForJoinBroadcast"
-	Publish_AskForLeaveBroadcast_FullMethodName   = "/proto.Publish/AskForLeaveBroadcast"
+	Publish_AskForPublish_FullMethodName = "/proto.Publish/AskForPublish"
+	Publish_AskToJoin_FullMethodName     = "/proto.Publish/AskToJoin"
+	Publish_AskToLeave_FullMethodName    = "/proto.Publish/AskToLeave"
 )
 
 // PublishClient is the client API for Publish service.
@@ -35,9 +32,6 @@ type PublishClient interface {
 	AskForPublish(ctx context.Context, in *PublishMessage, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	AskToJoin(ctx context.Context, in *JoinOrLeaveMessage, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	AskToLeave(ctx context.Context, in *JoinOrLeaveMessage, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	AskForMessageBroadcast(ctx context.Context, in *PublishMessage, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	AskForJoinBroadcast(ctx context.Context, in *JoinOrLeaveMessage, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	AskForLeaveBroadcast(ctx context.Context, in *JoinOrLeaveMessage, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type publishClient struct {
@@ -75,33 +69,6 @@ func (c *publishClient) AskToLeave(ctx context.Context, in *JoinOrLeaveMessage, 
 	return out, nil
 }
 
-func (c *publishClient) AskForMessageBroadcast(ctx context.Context, in *PublishMessage, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, Publish_AskForMessageBroadcast_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *publishClient) AskForJoinBroadcast(ctx context.Context, in *JoinOrLeaveMessage, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, Publish_AskForJoinBroadcast_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *publishClient) AskForLeaveBroadcast(ctx context.Context, in *JoinOrLeaveMessage, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, Publish_AskForLeaveBroadcast_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // PublishServer is the server API for Publish service.
 // All implementations must embed UnimplementedPublishServer
 // for forward compatibility
@@ -109,9 +76,6 @@ type PublishServer interface {
 	AskForPublish(context.Context, *PublishMessage) (*emptypb.Empty, error)
 	AskToJoin(context.Context, *JoinOrLeaveMessage) (*emptypb.Empty, error)
 	AskToLeave(context.Context, *JoinOrLeaveMessage) (*emptypb.Empty, error)
-	AskForMessageBroadcast(context.Context, *PublishMessage) (*emptypb.Empty, error)
-	AskForJoinBroadcast(context.Context, *JoinOrLeaveMessage) (*emptypb.Empty, error)
-	AskForLeaveBroadcast(context.Context, *JoinOrLeaveMessage) (*emptypb.Empty, error)
 	mustEmbedUnimplementedPublishServer()
 }
 
@@ -127,15 +91,6 @@ func (UnimplementedPublishServer) AskToJoin(context.Context, *JoinOrLeaveMessage
 }
 func (UnimplementedPublishServer) AskToLeave(context.Context, *JoinOrLeaveMessage) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AskToLeave not implemented")
-}
-func (UnimplementedPublishServer) AskForMessageBroadcast(context.Context, *PublishMessage) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AskForMessageBroadcast not implemented")
-}
-func (UnimplementedPublishServer) AskForJoinBroadcast(context.Context, *JoinOrLeaveMessage) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AskForJoinBroadcast not implemented")
-}
-func (UnimplementedPublishServer) AskForLeaveBroadcast(context.Context, *JoinOrLeaveMessage) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AskForLeaveBroadcast not implemented")
 }
 func (UnimplementedPublishServer) mustEmbedUnimplementedPublishServer() {}
 
@@ -204,60 +159,6 @@ func _Publish_AskToLeave_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Publish_AskForMessageBroadcast_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PublishMessage)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PublishServer).AskForMessageBroadcast(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Publish_AskForMessageBroadcast_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PublishServer).AskForMessageBroadcast(ctx, req.(*PublishMessage))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Publish_AskForJoinBroadcast_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(JoinOrLeaveMessage)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PublishServer).AskForJoinBroadcast(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Publish_AskForJoinBroadcast_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PublishServer).AskForJoinBroadcast(ctx, req.(*JoinOrLeaveMessage))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Publish_AskForLeaveBroadcast_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(JoinOrLeaveMessage)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PublishServer).AskForLeaveBroadcast(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Publish_AskForLeaveBroadcast_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PublishServer).AskForLeaveBroadcast(ctx, req.(*JoinOrLeaveMessage))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // Publish_ServiceDesc is the grpc.ServiceDesc for Publish service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -277,17 +178,169 @@ var Publish_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "AskToLeave",
 			Handler:    _Publish_AskToLeave_Handler,
 		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "proto/proto.proto",
+}
+
+const (
+	Broadcast_AskForMessageBroadcast_FullMethodName = "/proto.Broadcast/AskForMessageBroadcast"
+	Broadcast_AskForJoinBroadcast_FullMethodName    = "/proto.Broadcast/AskForJoinBroadcast"
+	Broadcast_AskForLeaveBroadcast_FullMethodName   = "/proto.Broadcast/AskForLeaveBroadcast"
+)
+
+// BroadcastClient is the client API for Broadcast service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type BroadcastClient interface {
+	AskForMessageBroadcast(ctx context.Context, in *PublishMessage, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	AskForJoinBroadcast(ctx context.Context, in *JoinOrLeaveMessage, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	AskForLeaveBroadcast(ctx context.Context, in *JoinOrLeaveMessage, opts ...grpc.CallOption) (*emptypb.Empty, error)
+}
+
+type broadcastClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewBroadcastClient(cc grpc.ClientConnInterface) BroadcastClient {
+	return &broadcastClient{cc}
+}
+
+func (c *broadcastClient) AskForMessageBroadcast(ctx context.Context, in *PublishMessage, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, Broadcast_AskForMessageBroadcast_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *broadcastClient) AskForJoinBroadcast(ctx context.Context, in *JoinOrLeaveMessage, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, Broadcast_AskForJoinBroadcast_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *broadcastClient) AskForLeaveBroadcast(ctx context.Context, in *JoinOrLeaveMessage, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, Broadcast_AskForLeaveBroadcast_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// BroadcastServer is the server API for Broadcast service.
+// All implementations must embed UnimplementedBroadcastServer
+// for forward compatibility
+type BroadcastServer interface {
+	AskForMessageBroadcast(context.Context, *PublishMessage) (*emptypb.Empty, error)
+	AskForJoinBroadcast(context.Context, *JoinOrLeaveMessage) (*emptypb.Empty, error)
+	AskForLeaveBroadcast(context.Context, *JoinOrLeaveMessage) (*emptypb.Empty, error)
+	mustEmbedUnimplementedBroadcastServer()
+}
+
+// UnimplementedBroadcastServer must be embedded to have forward compatible implementations.
+type UnimplementedBroadcastServer struct {
+}
+
+func (UnimplementedBroadcastServer) AskForMessageBroadcast(context.Context, *PublishMessage) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AskForMessageBroadcast not implemented")
+}
+func (UnimplementedBroadcastServer) AskForJoinBroadcast(context.Context, *JoinOrLeaveMessage) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AskForJoinBroadcast not implemented")
+}
+func (UnimplementedBroadcastServer) AskForLeaveBroadcast(context.Context, *JoinOrLeaveMessage) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AskForLeaveBroadcast not implemented")
+}
+func (UnimplementedBroadcastServer) mustEmbedUnimplementedBroadcastServer() {}
+
+// UnsafeBroadcastServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to BroadcastServer will
+// result in compilation errors.
+type UnsafeBroadcastServer interface {
+	mustEmbedUnimplementedBroadcastServer()
+}
+
+func RegisterBroadcastServer(s grpc.ServiceRegistrar, srv BroadcastServer) {
+	s.RegisterService(&Broadcast_ServiceDesc, srv)
+}
+
+func _Broadcast_AskForMessageBroadcast_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PublishMessage)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BroadcastServer).AskForMessageBroadcast(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Broadcast_AskForMessageBroadcast_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BroadcastServer).AskForMessageBroadcast(ctx, req.(*PublishMessage))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Broadcast_AskForJoinBroadcast_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(JoinOrLeaveMessage)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BroadcastServer).AskForJoinBroadcast(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Broadcast_AskForJoinBroadcast_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BroadcastServer).AskForJoinBroadcast(ctx, req.(*JoinOrLeaveMessage))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Broadcast_AskForLeaveBroadcast_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(JoinOrLeaveMessage)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BroadcastServer).AskForLeaveBroadcast(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Broadcast_AskForLeaveBroadcast_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BroadcastServer).AskForLeaveBroadcast(ctx, req.(*JoinOrLeaveMessage))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// Broadcast_ServiceDesc is the grpc.ServiceDesc for Broadcast service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Broadcast_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.Broadcast",
+	HandlerType: (*BroadcastServer)(nil),
+	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "AskForMessageBroadcast",
-			Handler:    _Publish_AskForMessageBroadcast_Handler,
+			Handler:    _Broadcast_AskForMessageBroadcast_Handler,
 		},
 		{
 			MethodName: "AskForJoinBroadcast",
-			Handler:    _Publish_AskForJoinBroadcast_Handler,
+			Handler:    _Broadcast_AskForJoinBroadcast_Handler,
 		},
 		{
 			MethodName: "AskForLeaveBroadcast",
-			Handler:    _Publish_AskForLeaveBroadcast_Handler,
+			Handler:    _Broadcast_AskForLeaveBroadcast_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
