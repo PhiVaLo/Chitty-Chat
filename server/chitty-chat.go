@@ -7,14 +7,12 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"sync"
 
 	"google.golang.org/grpc/credentials/insecure"
 
-	"sync"
-
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
-	// "fmt"
 )
 
 // Server Struct that will be used to represent the Server.

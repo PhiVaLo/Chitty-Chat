@@ -51,7 +51,7 @@ func main() {
 	wg.Wait()
 
 	//Connects to server
-	serverConnection, _ := connectToServer(client)
+	serverConnection, _ := connectToServer()
 
 	// Wait for the client (user) to send message
 	go sendMessage(client, serverConnection)
@@ -96,7 +96,7 @@ func startClient(client *Client, wg *sync.WaitGroup) {
 	}
 }
 
-func connectToServer(client *Client) (proto.PublishClient, error) {
+func connectToServer() (proto.PublishClient, error) {
 	// Dial the server at the specified port.
 	conn, err := grpc.Dial("localhost:"+strconv.Itoa(*serverPort), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -110,8 +110,6 @@ func sendMessage(client *Client, serverConnection proto.PublishClient) {
 	// Wait for input in the client terminal
 	scanner := bufio.NewScanner(os.Stdin)
 
-	//Connects to server
-	//serverConnection, _ := connectToServer(client)
 	client.timestamp++
 	log.Printf("Client #%d asks to join the server at lamport timestamp %d \n", client.id, client.timestamp)
 
@@ -120,8 +118,6 @@ func sendMessage(client *Client, serverConnection proto.PublishClient) {
 		Timestamp: int64(client.timestamp),
 		Port:      int64(client.portNumber),
 	})
-
-	//client.timestamp++ //They joined, so the timestamp is updated
 
 	for scanner.Scan() {
 		input := scanner.Text()
@@ -136,22 +132,11 @@ func sendMessage(client *Client, serverConnection proto.PublishClient) {
 		log.Printf("Participant sends the message: %s - at lamport timestamp %d \n", input, client.timestamp)
 
 		// Ask the server to publish the message
-		/*broadcastReturnMessage, err :=*/
 		serverConnection.AskForPublish(context.Background(), &proto.PublishMessage{
 			ClientId:  int64(client.id),
 			Timestamp: int64(client.timestamp),
 			Message:   input,
 		})
-		/*
-			if err != nil {
-				log.Printf(err.Error())
-			}
-
-			//Client receives a message, so the timestamp is updated
-			if client.timestamp < int(broadcastReturnMessage.Timestamp) {
-				client.timestamp = int(broadcastReturnMessage.Timestamp)
-			}
-			client.timestamp++*/
 	}
 }
 
@@ -190,77 +175,3 @@ func (client *Client) AskForLeaveBroadcast(ctx context.Context, in *proto.JoinOr
 
 	return &emptypb.Empty{}, nil
 }
-
-/*
-func receiveMessage(client *Client, serverConnection proto.PublishClient) {
-	//PRINT (Client received the message: *** at lamport timestamp)
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-func waitForTimeRequest(client *Client) {
-	// Connect to the server
-	serverConnection, _ := connectToServer()
-
-	// Wait for input in the client terminal
-	scanner := bufio.NewScanner(os.Stdin)
-	for scanner.Scan() {
-		input := scanner.Text()
-		log.Printf("Client asked for time with input: %s\n", input)
-
-		// Ask the server for the time
-		timeReturnMessage, err := serverConnection.AskForTime(context.Background(), &proto.AskForTimeMessage{
-			ClientId: int64(client.id),
-		})
-
-		if err != nil {
-			log.Printf(err.Error())
-		} else {
-			log.Printf("Server %s says the time is %s\n", timeReturnMessage.ServerName, timeReturnMessage.Time)
-		}
-	}
-}
-*/
