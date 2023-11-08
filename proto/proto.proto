@@ -9,7 +9,7 @@ option go_package = "proto/proto";
 message PermissionMessage {
     int64 nodeId = 1;
     int64 timestamp = 2;
-    string message = 3;
+    bool permission = 3;
 }
 
 service Node {

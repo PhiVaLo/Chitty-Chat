@@ -2,9 +2,14 @@ package main
 
 import (
 	"LogicalTime/proto"
+	"context"
 	"flag"
+	"google.golang.org/grpc"
+	"log"
+	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 )
 
@@ -44,5 +49,40 @@ func main() {
 }
 
 func startNode(node *Node) {
+	// Create a new grpc server
+	grpcServer := grpc.NewServer()
 
+	// Make the server listen at the given port (convert int port to string)
+	listener, err := net.Listen("tcp", ":"+strconv.Itoa(node.port))
+
+	// Error handling if client could not be created
+	if err != nil {
+		log.Fatalf("Could not create the client %v", err)
+	}
+
+	log.Printf("Started node at port: %d ; lamport timestamp %d \n", node.port, node.timestamp)
+
+	proto.RegisterNodeServer(grpcServer, node)
+	serveError := grpcServer.Serve(listener)
+	if serveError != nil {
+		log.Fatalf("Could not serve listener")
+	}
+}
+
+func (node *Node) AskForPermission(ctx context.Context, in *proto.PermissionMessage) (*proto.PermissionMessage, error) {
+	//Client receives the message therefore timestamp++
+	if node.timestamp < int(in.Timestamp) {
+		node.timestamp = int(in.Timestamp)
+	}
+	node.timestamp++
+
+	log.Printf("Node #%d asks for permission - at lamport timestamp %d \n", in.NodeId, node.timestamp)
+
+	var accessCS = false //Update depending on wheter or not this node is interacting with
+
+	return &proto.PermissionMessage{
+		NodeId:     int64(node.id),
+		Timestamp:  int64(node.timestamp),
+		Permission: accessCS,
+	}, nil
 }
