@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 )
 
@@ -24,8 +25,8 @@ type Node struct {
 }
 
 var (
-	//port = flag.Int("port", 0, "node port number")
-	id = flag.Int("id", 0, "nodeID should be unique")
+	port = flag.Int("port", 0, "node port number")
+	id   = flag.Int("id", 0, "nodeID should be unique")
 )
 
 func main() {
@@ -35,8 +36,10 @@ func main() {
 	// Create a node struct
 	node := &Node{
 		id:        *id,
-		port:      0,
+		port:      *port,
 		timestamp: 1,
+		requestQ:  make(chan int, 3),
+		replyQ:    make(chan int, 3),
 		nodes:     make(map[int]int),
 	}
 
@@ -55,7 +58,7 @@ func startNode(node *Node) {
 	grpcServer := grpc.NewServer()
 
 	// Make the server listen at the given port (convert int port to string)
-	listener, err := net.Listen("tcp", ":0") // Using port 0 allows the OS choose an available port
+	listener, err := net.Listen("tcp", ":"+strconv.Itoa(node.port))
 
 	// Error handling if client could not be created
 	if err != nil {
