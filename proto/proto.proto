@@ -6,26 +6,12 @@ package proto;
 
 option go_package = "proto/proto";
 
-message PublishMessage {
-    int64 clientId = 1;
+message PermissionMessage {
+    int64 nodeId = 1;
     int64 timestamp = 2;
     string message = 3;
 }
 
-message JoinOrLeaveMessage {
-    int64 clientId = 1;
-    int64 timestamp = 2;
-    int64 port = 3;
-}
-
-service Publish {
-    rpc AskForPublish(PublishMessage) returns (google.protobuf.Empty);
-    rpc AskToJoin(JoinOrLeaveMessage) returns (google.protobuf.Empty);
-    rpc AskToLeave(JoinOrLeaveMessage) returns (google.protobuf.Empty);
-}
-
-service Broadcast {
-    rpc AskForMessageBroadcast(PublishMessage) returns (google.protobuf.Empty);
-    rpc AskForJoinBroadcast(JoinOrLeaveMessage) returns (google.protobuf.Empty);
-    rpc AskForLeaveBroadcast(JoinOrLeaveMessage) returns (google.protobuf.Empty);
+service Node {
+    rpc AskForPermission(PermissionMessage) returns (google.protobuf.Empty);
 }
