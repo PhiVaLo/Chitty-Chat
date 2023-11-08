@@ -1,44 +1,72 @@
 # How to run the program
-The program is relatively simple to run. First and foremost the server needs to be initialized through
-the following command (assuming it is run from the root):
 
-```bash
-go run ./server/chitty-chat.go -port 5454
-```
-
-As shown the server needs to initialized to a port which does not necessarily have to be 5454 but it is
-used in this example. Afterwards one can initialize a client through the following command:
-
-```bash
-go run ./client/participants.go -cPort 8080 -sPort 5454 -id 1
-```
-
-This command needs a client port (-cPort 8080), a server port (-sPort 5454) which needs to match up with port given to the server in the first command and an id (-id 1). From here on out the client is able to speak with the server: simply type whatever message in the client you wish to send and it
-will be send to the server. It is also possible to open multiple clients as long as their ports and ids are unique and they reference the same server port.
-
-## Note:
-* The server port should always stay the same.
-* The client ports needs to be unique.
-* The client ids needs to be unique.
-* Both ports and ids are integers
+...
 
 
 --------------------------------------------------------------------
 
-### Below are the full commands used for this project in the report
+# Distributed Mutual Exclusion
+Distributed Systems (B-SWU & K-SD, Autumn 2023)
+* Mandatory Hand-in 4 - Distributed Mutual Exclusion
+* Submision Due Date: *`Tuesday 14, November 2023, 23:59`*
 
-From root-directory
+## Report
 
-Terminal-1 (server):
+<!-- - [LaTeX Report](https://www.overleaf.com/project/6526533fc222a23d8a1ca8d4) -->
 
-```bash
-go run ./server/chitty-chat.go -port 5454
-```
+<div style="text-align: center;">
+    <img src="https://i.imgur.com/NcX1hkX.png" alt="Centered Image" width="300">
+</div>
 
-Terminal-N (client):
 
-```bash
-go run ./client/participants.go -cPort 8080 -sPort 5454 -id 1
-go run ./client/participants.go -cPort 8081 -sPort 5454 -id 2
-go run ./client/participants.go -cPort 8082 -sPort 5454 -id 3
-```
+## Description:
+
+You have to implement distributed mutual exclusion between nodes in your distributed system. 
+
+Your system has to consist of a set of peer nodes, and you are not allowed to base your implementation on a central server solution.
+
+You can decide to base your implementation on one of the algorithms, that were discussed in lecture 7.
+
+
+
+## System Requirements
+
+1. Implement a system with a set of peer nodes, and a Critical Section, that represents a sensitive system operation. Any node can at any time decide it wants access to the Critical Section. Critical section in this exercise is emulated, for example by a print statement, or writing to a shared file on the network.
+ 
+2. Safety: Only one node at the same time is allowed to enter the Critical Section 
+
+3. Liveliness: Every node that requests access to the Critical Section, will get access to the Critical Section (at some point in time)
+
+## Technical Requirements:
+
+1. Use Golang to implement the service's nodes
+
+2. In you source code repo, provide a README.md, that explains how to start your system
+
+3. Use gRPC for message passing between nodes
+
+4. Your nodes need to find each other. This is called service discovery. You could consider  one of the following options for implementing service discovery:
+   1. Supply a file with IP addresses/ports of other nodes
+   2. Enter IP address/ports through the command line
+   3. Use an existing package or service
+
+5. Demonstrate that the system can be started with at least 3 nodes
+
+6. Demonstrate using your system's logs,  a sequence of messages in the system, that leads to a node getting access to the Critical Section. You should provide a discussion of your algorithm, using examples from your logs.
+
+
+## Hand-in requirements:
+
+1. Hand in a single report in a pdf file. A good report length is between 2-4 pages.
+
+2. Provide a link to a Git repo with your source code in the report
+
+3. Include system logs, that document the requirements are met, in the appendix of your report
+
+
+## Grading notes
+
+* Partial implementations may be accepted, if the students can reason what they should have done in the report.
+
+* In order to pass, the students have to attempt to answer all questions.
+
