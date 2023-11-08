@@ -13,5 +13,5 @@ message PermissionMessage {
 }
 
 service Node {
-    rpc AskForPermission(PermissionMessage) returns (google.protobuf.Empty);
+    rpc AskForPermission(PermissionMessage) returns (PermissionMessage);
 }
