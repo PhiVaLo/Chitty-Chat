@@ -2,6 +2,7 @@ package main
 
 import (
 	"LogicalTime/proto"
+	"bufio"
 	"context"
 	"flag"
 	"google.golang.org/grpc"
@@ -40,10 +41,11 @@ func main() {
 		timestamp: 1,
 		requestQ:  make(chan int, 3),
 		replyQ:    make(chan int, 3),
+		inCS:      false,
 		nodes:     make(map[int]int),
 	}
 
-	// Starts node as a grpc server
+	// Starts node as a grpc server - Listens for requests
 	go startNode(node)
 
 	// Keep the client running / Wait for shutdown
@@ -74,6 +76,23 @@ func startNode(node *Node) {
 	}
 }
 
+func sendPermissionMessage(node *Node) {
+	// Wait for input in the client terminal
+	scanner := bufio.NewScanner(os.Stdin)
+
+	for scanner.Scan() {
+		node.timestamp++
+		log.Printf("Node #%d asks for permission at lamport timestamp %d \n", node.id, node.timestamp)
+
+		//Needs to do this to all connections (connection proto.NodeClient)
+		connection.AskForPermission(context.Background(), &proto.PermissionMessage{
+			NodeId:     int64(node.id),
+			Timestamp:  int64(node.timestamp),
+			Permission: node.inCS,
+		})
+	}
+}
+
 func (node *Node) AskForPermission(ctx context.Context, in *proto.PermissionMessage) (*proto.PermissionMessage, error) {
 	//Client receives the message therefore timestamp++
 	if node.timestamp < int(in.Timestamp) {
@@ -86,6 +105,6 @@ func (node *Node) AskForPermission(ctx context.Context, in *proto.PermissionMess
 	return &proto.PermissionMessage{
 		NodeId:     int64(node.id),
 		Timestamp:  int64(node.timestamp),
-		Permission: node.inCS,
+		Permission: !node.inCS,
 	}, nil
 }
