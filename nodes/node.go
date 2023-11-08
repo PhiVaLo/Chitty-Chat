@@ -17,6 +17,9 @@ type Node struct {
 	id        int
 	port      int
 	timestamp int
+	requestQ  chan int
+	replyQ    chan int
+	inCS      bool
 	nodes     map[int]int
 }
 
@@ -77,11 +80,9 @@ func (node *Node) AskForPermission(ctx context.Context, in *proto.PermissionMess
 
 	log.Printf("Node #%d asks for permission - at lamport timestamp %d \n", in.NodeId, node.timestamp)
 
-	var accessCS = false //Update depending on wheter or not this node is interacting with
-
 	return &proto.PermissionMessage{
 		NodeId:     int64(node.id),
 		Timestamp:  int64(node.timestamp),
-		Permission: accessCS,
+		Permission: node.inCS,
 	}, nil
 }
