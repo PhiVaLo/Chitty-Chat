@@ -1,5 +1,6 @@
 package main
 
+/*
 import (
 	"fmt"
 	"os"
@@ -39,3 +40,4 @@ func getEnvironmentVariables2() (updatedEnv map[int]int) {
 
 	return envMap
 }
+*/

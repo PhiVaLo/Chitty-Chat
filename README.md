@@ -1,7 +1,16 @@
 # How to run the program
 
-...
+In terminal
 
+```bash
+go run ./nodes/node.go -port 5050
+```
+```bash
+go run ./nodes/node.go -port 5051
+```
+```bash
+go run ./nodes/node.go -port 5052
+```
 
 --------------------------------------------------------------------
 

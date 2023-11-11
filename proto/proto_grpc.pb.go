@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 
 const (
 	Node_AskForPermission_FullMethodName = "/proto.Node/AskForPermission"
+	Node_NotifyExit_FullMethodName       = "/proto.Node/NotifyExit"
 )
 
 // NodeClient is the client API for Node service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type NodeClient interface {
 	AskForPermission(ctx context.Context, in *PermissionMessage, opts ...grpc.CallOption) (*PermissionMessage, error)
+	NotifyExit(ctx context.Context, in *PermissionMessage, opts ...grpc.CallOption) (*PermissionMessage, error)
 }
 
 type nodeClient struct {
@@ -46,11 +48,21 @@ func (c *nodeClient) AskForPermission(ctx context.Context, in *PermissionMessage
 	return out, nil
 }
 
+func (c *nodeClient) NotifyExit(ctx context.Context, in *PermissionMessage, opts ...grpc.CallOption) (*PermissionMessage, error) {
+	out := new(PermissionMessage)
+	err := c.cc.Invoke(ctx, Node_NotifyExit_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // NodeServer is the server API for Node service.
 // All implementations must embed UnimplementedNodeServer
 // for forward compatibility
 type NodeServer interface {
 	AskForPermission(context.Context, *PermissionMessage) (*PermissionMessage, error)
+	NotifyExit(context.Context, *PermissionMessage) (*PermissionMessage, error)
 	mustEmbedUnimplementedNodeServer()
 }
 
@@ -60,6 +72,9 @@ type UnimplementedNodeServer struct {
 
 func (UnimplementedNodeServer) AskForPermission(context.Context, *PermissionMessage) (*PermissionMessage, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AskForPermission not implemented")
+}
+func (UnimplementedNodeServer) NotifyExit(context.Context, *PermissionMessage) (*PermissionMessage, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NotifyExit not implemented")
 }
 func (UnimplementedNodeServer) mustEmbedUnimplementedNodeServer() {}
 
@@ -92,6 +107,24 @@ func _Node_AskForPermission_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Node_NotifyExit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PermissionMessage)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NodeServer).NotifyExit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Node_NotifyExit_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NodeServer).NotifyExit(ctx, req.(*PermissionMessage))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Node_ServiceDesc is the grpc.ServiceDesc for Node service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -102,6 +135,10 @@ var Node_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AskForPermission",
 			Handler:    _Node_AskForPermission_Handler,
+		},
+		{
+			MethodName: "NotifyExit",
+			Handler:    _Node_NotifyExit_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

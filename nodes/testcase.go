@@ -1,12 +1,6 @@
 package main
 
-import (
-	"fmt"
-	"os"
-	"strconv"
-	"strings"
-)
-
+/*
 func main() {
 	os.Setenv("Node_1", "2555")
 	os.Setenv("Node_2", "2556")
@@ -47,3 +41,4 @@ func getEnvironmentVariables() (updatedEnv map[int]int) {
 
 	return envMap
 }
+*/
