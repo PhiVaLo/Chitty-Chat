@@ -48,7 +48,7 @@ func main() {
 	// Starts node as a grpc server - Listens for requests
 	go startNode(node)
 
-	// Keep the client running / Wait for shutdown
+	// Keep the node running / Wait for shutdown
 	signalChannel := make(chan os.Signal, 1)
 	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM) //Notifies the channel when ctrl+c is pressed or the terminal is interrupted
 
@@ -102,9 +102,29 @@ func (node *Node) AskForPermission(ctx context.Context, in *proto.PermissionMess
 
 	log.Printf("Node #%d asks for permission - at lamport timestamp %d \n", in.NodeId, node.timestamp)
 
+	//Implementation
+
 	return &proto.PermissionMessage{
 		NodeId:     int64(node.id),
 		Timestamp:  int64(node.timestamp),
 		Permission: !node.inCS,
+	}, nil
+}
+
+func (node *Node) NotifyExit(ctx context.Context, in *proto.PermissionMessage) (*proto.PermissionMessage, error) {
+	//Client receives the message therefore timestamp++
+	if node.timestamp < int(in.Timestamp) {
+		node.timestamp = int(in.Timestamp)
+	}
+	node.timestamp++
+
+	log.Printf("Node #%d notifies exit of CS - at lamport timestamp %d \n", in.NodeId, node.timestamp)
+
+	//Implementation
+
+	return &proto.PermissionMessage{
+		NodeId:     int64(node.id),
+		Timestamp:  int64(node.timestamp),
+		Permission: node.inCS,
 	}, nil
 }

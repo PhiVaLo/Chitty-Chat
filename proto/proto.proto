@@ -14,4 +14,5 @@ message PermissionMessage {
 
 service Node {
     rpc AskForPermission(PermissionMessage) returns (PermissionMessage);
+    rpc NotifyExit(PermissionMessage) returns (PermissionMessage);
 }
