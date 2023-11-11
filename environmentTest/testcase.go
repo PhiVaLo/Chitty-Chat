@@ -1,23 +1,24 @@
-package main
+package environmentTest
 
 /*
-import (
-	"fmt"
-	"os"
-	"strconv"
-	"strings"
-)
-
 func main() {
-	mapa := getEnvironmentVariables2()
+	os.Setenv("Node_1", "2555")
+	os.Setenv("Node_2", "2556")
+	os.Setenv("Node_3", "2557")
+	os.Setenv("Node_4", "2558")
+
+	mapa := getEnvironmentVariables()
 
 	for key, value := range mapa {
 		fmt.Printf("Key: %d, Value: %d \n", key, value)
 	}
 
+	for {
+
+	}
 }
 
-func getEnvironmentVariables2() (updatedEnv map[int]int) {
+func getEnvironmentVariables() (updatedEnv map[int]int) {
 	env := os.Environ()
 	envSorted := []string{}
 	envMap := make(map[int]int)
