@@ -3,13 +3,13 @@
 In terminal
 
 ```bash
-go run ./nodes/node.go -port 5050
+go run ./nodes/node.go -port 5050 -id 1
 ```
 ```bash
-go run ./nodes/node.go -port 5051
+go run ./nodes/node.go -port 5051 -id 2
 ```
 ```bash
-go run ./nodes/node.go -port 5052
+go run ./nodes/node.go -port 5052 -id 3
 ```
 
 --------------------------------------------------------------------
