@@ -59,6 +59,8 @@ func main() {
 	// Starts node as a grpc server - Listens for requests
 	go startNode(node)
 
+	go sendPermissionMessage(node)
+
 	// Keep the node running / Wait for shutdown
 	signalChannel := make(chan os.Signal, 1)
 	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM) //Notifies the channel when ctrl+c is pressed or the terminal is interrupted
@@ -123,6 +125,7 @@ func sendPermissionMessage(node *Node) {
 						node.timestamp = int(reply.Timestamp)
 					}
 					node.timestamp++
+					log.Printf("Node #%d receives a reply from node #%d at lamport timestamp %d \n", node.id, reply.NodeId, node.timestamp)
 
 					defer wg.Done()
 				}()
