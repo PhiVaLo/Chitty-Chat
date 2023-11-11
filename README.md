@@ -1,6 +1,6 @@
 # How to run the program
-
-In terminal
+In terminals
+Be in root - it doesn't matter which order the nodes are initialized, but they all need to be present to run.
 
 ```bash
 go run ./nodes/node.go -port 5050 -id 1
