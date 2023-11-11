@@ -19,10 +19,10 @@ type Node struct {
 	id        int
 	port      int
 	timestamp int
-	requestQ  chan int
-	replyQ    chan int
+	requestQ  map[int]int //ID to Timestamp
+	replyQ    map[int]int //ID to Timestamp
 	inCS      bool
-	nodes     map[int]int
+	nodes     map[int]int //ID to Port
 }
 
 var (
@@ -39,8 +39,8 @@ func main() {
 		id:        *id,
 		port:      *port,
 		timestamp: 1,
-		requestQ:  make(chan int, 3),
-		replyQ:    make(chan int, 3),
+		requestQ:  make(map[int]int),
+		replyQ:    make(map[int]int),
 		inCS:      false,
 		nodes:     make(map[int]int),
 	}
