@@ -75,7 +75,7 @@ func startNode(node *Node) {
 	// Make the server listen at the given port (convert int port to string)
 	listener, err := net.Listen("tcp", ":"+strconv.Itoa(node.port))
 
-	// Error handling if client could not be created
+	// Error handling if node could not be created
 	if err != nil {
 		log.Fatalf("Could not create the node %v", err)
 	}
@@ -90,7 +90,7 @@ func startNode(node *Node) {
 }
 
 func sendPermissionMessage(node *Node) {
-	// Wait for input in the client terminal
+	// Wait for input in the node terminal
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for scanner.Scan() {
