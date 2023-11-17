@@ -6,13 +6,22 @@ package proto;
 
 option go_package = "proto/proto";
 
-message PermissionMessage {
+message AcknowledgementMessage {
     int64 nodeId = 1;
-    int64 timestamp = 2;
-    bool permission = 3;
+    string state = 2;
 }
 
-service Node {
-    rpc AskForPermission(PermissionMessage) returns (PermissionMessage);
-    rpc NotifyExit(PermissionMessage) returns (PermissionMessage);
+message BidMessage {
+    int64 nodeId = 1;
+    int64 bidAmount = 2;
+}
+
+message ResultMessage {
+    int64 nodeId = 1;
+    int64 resultAmount = 2;
+}
+
+service AuctionNode {
+    rpc Bid(BidMessage) returns (AcknowledgementMessage);
+    rpc Result(google.protobuf.Empty) returns (ResultMessage);
 }
