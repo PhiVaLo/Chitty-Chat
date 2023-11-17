@@ -1,81 +1,107 @@
 # How to run the program
-In terminals
-Be in root - it doesn't matter which order the nodes are initialized, but they all need to be present to run.
 
-```bash
-go run ./nodes/node.go -port 5050 -id 1
-```
-```bash
-go run ./nodes/node.go -port 5051 -id 2
-```
-```bash
-go run ./nodes/node.go -port 5052 -id 3
-```
+
+
+
 
 --------------------------------------------------------------------
 
 # Distributed Mutual Exclusion
 Distributed Systems (B-SWU & K-SD, Autumn 2023)
-* Mandatory Hand-in 4 - Distributed Mutual Exclusion
-* Submision Due Date: *`Tuesday 14, November 2023, 23:59`*
+* Mandatory Hand-in 5 - Replication
+* Submision Due Date: *`Tuesday 28, November 2023, 23:59`*
 
 ## Report
 
-<!-- - [LaTeX Report](https://www.overleaf.com/project/6526533fc222a23d8a1ca8d4) -->
+- [Google Docs](https://docs.google.com/document/d/1CT_8YhAHZcycnY6ix9731VRISfUEH5zQjuLDVVoCBTo/edit)
 
 <div style="text-align: center;">
     <img src="https://i.imgur.com/NcX1hkX.png" alt="Centered Image" width="300">
 </div>
 
+--------------------------------------------------------------------
 
-## Description:
+# == A Distributed Auction System ==
 
-You have to implement distributed mutual exclusion between nodes in your distributed system. 
+## ::Introduction::
 
-Your system has to consist of a set of peer nodes, and you are not allowed to base your implementation on a central server solution.
-
-You can decide to base your implementation on one of the algorithms, that were discussed in lecture 7.
-
+You must implement a **distributed auction system** using replication: a distributed component which handles auctions, and provides operations for bidding and querying the state of an auction. The component must faithfully implement the semantics of the system described below, and must at least be resilient to one (1) crash failure.
 
 
-## System Requirements
+## ::MA Learning Goal::
 
-1. Implement a system with a set of peer nodes, and a Critical Section, that represents a sensitive system operation. Any node can at any time decide it wants access to the Critical Section. Critical section in this exercise is emulated, for example by a print statement, or writing to a shared file on the network.
+The goal of this mandatory activity is that you learn (by doing) how to use replication to design a service that is resilent to crashes. In particular, it is important that you can recognise what the key issues that may arise are and understand how to deal with them.
+
  
-2. Safety: Only one node at the same time is allowed to enter the Critical Section 
 
-3. Liveliness: Every node that requests access to the Critical Section, will get access to the Critical Section (at some point in time)
+## ::API::
 
-## Technical Requirements:
+Your system must be implemented as some number of nodes,  running on distinct processes (no threads). Clients direct API requests to any node they happen to know (it is up to you to decide how many nodes can be known). Nodes must respond to the following API
 
-1. Use Golang to implement the service's nodes
+Method:  bid
+Inputs:  amount (an int)
+Outputs: ack
+Comment: given a bid, returns an outcome among {fail, success or exception}
 
-2. In you source code repo, provide a README.md, that explains how to start your system
+ 
 
-3. Use gRPC for message passing between nodes
+Method:  result
+Inputs:  void
+Outputs: outcome
+Comment:  if the auction is over, it returns the result, else highest bid.
 
-4. Your nodes need to find each other. This is called service discovery. You could consider  one of the following options for implementing service discovery:
-   1. Supply a file with IP addresses/ports of other nodes
-   2. Enter IP address/ports through the command line
-   3. Use an existing package or service
+ 
 
-5. Demonstrate that the system can be started with at least 3 nodes
+## ::Semantics::
 
-6. Demonstrate using your system's logs,  a sequence of messages in the system, that leads to a node getting access to the Critical Section. You should provide a discussion of your algorithm, using examples from your logs.
+Your component must have the following behaviour, for any reasonable sequentialisation/interleaving of requests to it:
 
+- The first call to "bid" registers the bidder.
 
-## Hand-in requirements:
+- Bidders can bid several times, but a bid must be higher than the previous one(s).
 
-1. Hand in a single report in a pdf file. A good report length is between 2-4 pages.
+- after a predefined timeframe, the highest bidder ends up as the winner of the auction, e.g, after 100 time units from the start of the system. 
 
-2. Provide a link to a Git repo with your source code in the report
+- bidders can query the system in order to know the state of the auction.
 
-3. Include system logs, that document the requirements are met, in the appendix of your report
+ 
 
+## :: Faults :: 
 
-## Grading notes
+- Assume a network that has reliable, ordered message transport, where transmissions to non-failed nodes complete within a known time-limit.
 
-* Partial implementations may be accepted, if the students can reason what they should have done in the report.
+- Your component must be resilient to the failure-stop failure of one  (1) node.
 
-* In order to pass, the students have to attempt to answer all questions.
+ 
 
+## :: Report ::
+
+Write a report of at most 3 pages containing the following structure (exactly create four sections as below):
+
+- Introduction. A short introduction to what you have done.
+
+- Architecture. A description of the architecture of the system and its protocols (behaviour), including any protocols used internally between nodes of the system. 
+
+- Correctness 1. Argue whether your implementation satisfies linearisability or sequential consistency. In order to do so, first, you must state precisely what such property is. 
+
+- Correctness 2. An argument that your protocol is correct in the absence and the presence of failures.
+
+ 
+
+## :: Implementation ::
+
+- Implement your system in GoLang. We strongly recommend that you reuse the the frameworks and libraries used in the previous mandatory activities.
+
+- Submit a log (as a separate file) documenting a correct system run under failures. Your log can be a collection of relevant print statements, that demonstrates the control flow trough the system. It must be clear from the log where crashes occur.
+
+ - Provide a README file with instructions on how to run your implementation. 
+
+ 
+
+## **>>** SUMMARY of what to submit on learnit **<<**
+
+- a link to a GitHub repo containing the code (please make sure the repo is public so that we can easily access it. Alternatively, you can submit a .zip file in learnit.
+
+- A file report.pdf containing a report (in PDF) with your answers; the file can be **at most** 3 A4 pages (it can be less), font cannot be smaller than 9pt.
+
+- A text file log.txt containing log(s).
