@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -19,126 +20,163 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Node_AskForPermission_FullMethodName = "/proto.Node/AskForPermission"
-	Node_NotifyExit_FullMethodName       = "/proto.Node/NotifyExit"
+	Database_AskForBid_FullMethodName            = "/proto.Database/AskForBid"
+	Database_AskForResult_FullMethodName         = "/proto.Database/AskForResult"
+	Database_AskForCorrespondance_FullMethodName = "/proto.Database/AskForCorrespondance"
 )
 
-// NodeClient is the client API for Node service.
+// DatabaseClient is the client API for Database service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type NodeClient interface {
-	AskForPermission(ctx context.Context, in *PermissionMessage, opts ...grpc.CallOption) (*PermissionMessage, error)
-	NotifyExit(ctx context.Context, in *PermissionMessage, opts ...grpc.CallOption) (*PermissionMessage, error)
+type DatabaseClient interface {
+	AskForBid(ctx context.Context, in *BidMessage, opts ...grpc.CallOption) (*AcknowledgementMessage, error)
+	AskForResult(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ResultMessage, error)
+	AskForCorrespondance(ctx context.Context, in *AuctionInfoMessage, opts ...grpc.CallOption) (*AuctionInfoMessage, error)
 }
 
-type nodeClient struct {
+type databaseClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewNodeClient(cc grpc.ClientConnInterface) NodeClient {
-	return &nodeClient{cc}
+func NewDatabaseClient(cc grpc.ClientConnInterface) DatabaseClient {
+	return &databaseClient{cc}
 }
 
-func (c *nodeClient) AskForPermission(ctx context.Context, in *PermissionMessage, opts ...grpc.CallOption) (*PermissionMessage, error) {
-	out := new(PermissionMessage)
-	err := c.cc.Invoke(ctx, Node_AskForPermission_FullMethodName, in, out, opts...)
+func (c *databaseClient) AskForBid(ctx context.Context, in *BidMessage, opts ...grpc.CallOption) (*AcknowledgementMessage, error) {
+	out := new(AcknowledgementMessage)
+	err := c.cc.Invoke(ctx, Database_AskForBid_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *nodeClient) NotifyExit(ctx context.Context, in *PermissionMessage, opts ...grpc.CallOption) (*PermissionMessage, error) {
-	out := new(PermissionMessage)
-	err := c.cc.Invoke(ctx, Node_NotifyExit_FullMethodName, in, out, opts...)
+func (c *databaseClient) AskForResult(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ResultMessage, error) {
+	out := new(ResultMessage)
+	err := c.cc.Invoke(ctx, Database_AskForResult_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// NodeServer is the server API for Node service.
-// All implementations must embed UnimplementedNodeServer
+func (c *databaseClient) AskForCorrespondance(ctx context.Context, in *AuctionInfoMessage, opts ...grpc.CallOption) (*AuctionInfoMessage, error) {
+	out := new(AuctionInfoMessage)
+	err := c.cc.Invoke(ctx, Database_AskForCorrespondance_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// DatabaseServer is the server API for Database service.
+// All implementations must embed UnimplementedDatabaseServer
 // for forward compatibility
-type NodeServer interface {
-	AskForPermission(context.Context, *PermissionMessage) (*PermissionMessage, error)
-	NotifyExit(context.Context, *PermissionMessage) (*PermissionMessage, error)
-	mustEmbedUnimplementedNodeServer()
+type DatabaseServer interface {
+	AskForBid(context.Context, *BidMessage) (*AcknowledgementMessage, error)
+	AskForResult(context.Context, *emptypb.Empty) (*ResultMessage, error)
+	AskForCorrespondance(context.Context, *AuctionInfoMessage) (*AuctionInfoMessage, error)
+	mustEmbedUnimplementedDatabaseServer()
 }
 
-// UnimplementedNodeServer must be embedded to have forward compatible implementations.
-type UnimplementedNodeServer struct {
+// UnimplementedDatabaseServer must be embedded to have forward compatible implementations.
+type UnimplementedDatabaseServer struct {
 }
 
-func (UnimplementedNodeServer) AskForPermission(context.Context, *PermissionMessage) (*PermissionMessage, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AskForPermission not implemented")
+func (UnimplementedDatabaseServer) AskForBid(context.Context, *BidMessage) (*AcknowledgementMessage, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AskForBid not implemented")
 }
-func (UnimplementedNodeServer) NotifyExit(context.Context, *PermissionMessage) (*PermissionMessage, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method NotifyExit not implemented")
+func (UnimplementedDatabaseServer) AskForResult(context.Context, *emptypb.Empty) (*ResultMessage, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AskForResult not implemented")
 }
-func (UnimplementedNodeServer) mustEmbedUnimplementedNodeServer() {}
+func (UnimplementedDatabaseServer) AskForCorrespondance(context.Context, *AuctionInfoMessage) (*AuctionInfoMessage, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AskForCorrespondance not implemented")
+}
+func (UnimplementedDatabaseServer) mustEmbedUnimplementedDatabaseServer() {}
 
-// UnsafeNodeServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to NodeServer will
+// UnsafeDatabaseServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to DatabaseServer will
 // result in compilation errors.
-type UnsafeNodeServer interface {
-	mustEmbedUnimplementedNodeServer()
+type UnsafeDatabaseServer interface {
+	mustEmbedUnimplementedDatabaseServer()
 }
 
-func RegisterNodeServer(s grpc.ServiceRegistrar, srv NodeServer) {
-	s.RegisterService(&Node_ServiceDesc, srv)
+func RegisterDatabaseServer(s grpc.ServiceRegistrar, srv DatabaseServer) {
+	s.RegisterService(&Database_ServiceDesc, srv)
 }
 
-func _Node_AskForPermission_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PermissionMessage)
+func _Database_AskForBid_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BidMessage)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(NodeServer).AskForPermission(ctx, in)
+		return srv.(DatabaseServer).AskForBid(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Node_AskForPermission_FullMethodName,
+		FullMethod: Database_AskForBid_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NodeServer).AskForPermission(ctx, req.(*PermissionMessage))
+		return srv.(DatabaseServer).AskForBid(ctx, req.(*BidMessage))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Node_NotifyExit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PermissionMessage)
+func _Database_AskForResult_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(NodeServer).NotifyExit(ctx, in)
+		return srv.(DatabaseServer).AskForResult(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Node_NotifyExit_FullMethodName,
+		FullMethod: Database_AskForResult_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NodeServer).NotifyExit(ctx, req.(*PermissionMessage))
+		return srv.(DatabaseServer).AskForResult(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Node_ServiceDesc is the grpc.ServiceDesc for Node service.
+func _Database_AskForCorrespondance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuctionInfoMessage)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DatabaseServer).AskForCorrespondance(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Database_AskForCorrespondance_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DatabaseServer).AskForCorrespondance(ctx, req.(*AuctionInfoMessage))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// Database_ServiceDesc is the grpc.ServiceDesc for Database service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Node_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.Node",
-	HandlerType: (*NodeServer)(nil),
+var Database_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.Database",
+	HandlerType: (*DatabaseServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "AskForPermission",
-			Handler:    _Node_AskForPermission_Handler,
+			MethodName: "AskForBid",
+			Handler:    _Database_AskForBid_Handler,
 		},
 		{
-			MethodName: "NotifyExit",
-			Handler:    _Node_NotifyExit_Handler,
+			MethodName: "AskForResult",
+			Handler:    _Database_AskForResult_Handler,
+		},
+		{
+			MethodName: "AskForCorrespondance",
+			Handler:    _Database_AskForCorrespondance_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

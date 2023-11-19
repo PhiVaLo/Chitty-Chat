@@ -8,20 +8,34 @@ option go_package = "proto/proto";
 
 message AcknowledgementMessage {
     int64 id = 1;
-    string state = 2;
+    int64 timestamp = 2;
+    string state = 3;
 }
 
 message BidMessage {
     int64 id = 1;
-    int64 bidAmount = 2;
+    int64 timestamp = 2;
+    int64 bidAmount = 3;
 }
 
 message ResultMessage {
     int64 id = 1;
-    int64 resultAmount = 2;
+    int64 timestamp = 2;
+    int64 resultAmount = 3;
+    int64 winnerId = 4;
 }
+
+message AuctionInfoMessage {
+    int64 id = 1;
+    int64 timestamp = 2;
+    int64 highestBid = 3;
+    int64 highestBidderId = 4;
+    int64 endtime = 5;
+}
+
 
 service Database {
     rpc AskForBid(BidMessage) returns (AcknowledgementMessage);
     rpc AskForResult(google.protobuf.Empty) returns (ResultMessage);
+    rpc AskForCorrespondance(AuctionInfoMessage) returns (AuctionInfoMessage);
 }
