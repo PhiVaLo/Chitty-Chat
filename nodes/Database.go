@@ -11,5 +11,4 @@ type Database struct {
 }
 
 func main() {
-
 }
