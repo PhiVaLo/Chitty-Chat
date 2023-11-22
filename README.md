@@ -1,8 +1,13 @@
 # How to run the program
 
+A node can input the following commands:
 
+```bash
+bid <amount>
+result
+```
 
-
+<amount> is an integer
 
 --------------------------------------------------------------------
 
@@ -70,7 +75,7 @@ Your component must have the following behaviour, for any reasonable sequentiali
 
 - Assume a network that has reliable, ordered message transport, where transmissions to non-failed nodes complete within a known time-limit.
 
-- Your component must be resilient to the failure-stop failure of one  (1) node.
+- Your component must be resilient to the failure-stop failure of one (1) node.
 
  
 
