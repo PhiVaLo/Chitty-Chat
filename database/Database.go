@@ -215,7 +215,7 @@ func (database *Database) AskForBid(ctx context.Context, in *proto.BidMessage) (
 }
 
 func (database *Database) AskForResult(ctx context.Context, in *emptypb.Empty) (*proto.ResultMessage, error) {
-	log.Printf("You requested the current result \n")
+	log.Printf("The current result was requested \n")
 	return &proto.ResultMessage{
 		Id:           int64(database.id),
 		Timestamp:    int64(database.timestamp),
