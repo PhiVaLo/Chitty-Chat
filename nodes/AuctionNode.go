@@ -13,7 +13,6 @@ import (
 	"strings"
 	"sync"
 	"syscall"
-	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -45,9 +44,11 @@ func main() {
 	}
 
 	// Initialize database map of connected databases
-	auctionNode.databaseConn[0], _ = ConnectToDatabase(5050)
-	auctionNode.databaseConn[1], _ = ConnectToDatabase(5051)
-	auctionNode.databaseConn[2], _ = ConnectToDatabase(5052)
+	go func() {
+		auctionNode.databaseConn[1], _ = ConnectToDatabase(5050)
+		auctionNode.databaseConn[2], _ = ConnectToDatabase(5051)
+		auctionNode.databaseConn[3], _ = ConnectToDatabase(5052)
+	}()
 
 	// Handle
 	log.Printf("To bid type: bid <amount> \n To request result type: result \n")
@@ -88,8 +89,6 @@ func main() {
 
 func (auctionNode *AuctionNode) BidOnAuction(bid int) {
 
-	var wg sync.WaitGroup // Add waitgroup
-
 	msg := &proto.BidMessage{
 		Id:        int64(auctionNode.id),
 		Timestamp: int64(auctionNode.timestamp),
@@ -98,22 +97,15 @@ func (auctionNode *AuctionNode) BidOnAuction(bid int) {
 
 	acknowledgementList := make(map[int]*proto.AcknowledgementMessage)
 
-	for _, database := range auctionNode.databaseConn {
+	for id, database := range auctionNode.databaseConn {
+		acknowledgementMessage, err := database.AskForBid(context.Background(), msg)
 
-		// If the method takes to long, go to errorhandling
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			acknowledgementMessage, err := database.AskForBid(context.Background(), msg)
-
-			if err != nil {
-				log.Fatalf("Error message: %v", err)
-			}
-
+		//Checks the connection to the database
+		if err != nil {
+			log.Printf("Could not connect to Database #%d", id)
+		} else {
 			acknowledgementList[int(acknowledgementMessage.Id)] = acknowledgementMessage
-		}()
-		//go errorHandling(&wg)
-		wg.Wait()
+		}
 	}
 
 	var newestMessage *proto.AcknowledgementMessage
@@ -157,24 +149,20 @@ func (auctionNode *AuctionNode) Result() {
 	resultList := make(map[int]*proto.ResultMessage)
 
 	// Get resultmessages from all databases
-	for _, database := range auctionNode.databaseConn {
-
-		// If the method takes to long, go to errorhandling
+	for id, database := range auctionNode.databaseConn {
 		wg.Add(1)
 
 		go func() {
 			defer wg.Done()
 			resultMessage, err := database.AskForResult(context.Background(), &emptypb.Empty{})
 
+			//Checks the connection to the database
 			if err != nil {
-				log.Fatalf("This is an error: %v", err)
-				wg.Done()
-				return
+				log.Printf("Could not connect to Database #%d", id)
+			} else {
+				resultList[int(resultMessage.Id)] = resultMessage
 			}
-
-			resultList[int(resultMessage.Id)] = resultMessage
 		}()
-		//go errorHandling(&wg)
 		wg.Wait()
 	}
 
@@ -195,17 +183,5 @@ func (auctionNode *AuctionNode) Result() {
 		log.Printf("The current highest bid is: %d", newestMessage.ResultAmount)
 	} else { // If auction is over (WinnerId has a value)
 		log.Printf("The auction is over, the winner is Bidder %d with the highest bid: %d", newestMessage.WinnerId, newestMessage.ResultAmount)
-	}
-}
-
-func errorHandling(wg *sync.WaitGroup) { // Error occurs when contact time limit is exceeded
-	// Count to 20 seconds to give method time to finish
-	duration := 20 * time.Second
-	timer := time.After(duration)
-
-	select { //Sælcat
-	case <-timer:
-		// Code to execute after 20 seconds
-		wg.Done()
 	}
 }
