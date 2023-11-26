@@ -1,30 +1,32 @@
 # How to run the program
 
-A node can input the following commands:
+### Note:
+- Remember to run the databases first and then the nodes afterwards.
+- The program needs all three databases in the beginning and cannot handle more than three.
+- The auction automatically closes after 8 bids but it can be manually set under the auctions endTime variable.
 
-Run Databases:
+### Run Databases:
 ```bash
 go run ./database/Database.go -port 5050 -id 1
 go run ./database/Database.go -port 5051 -id 2
 go run ./database/Database.go -port 5052 -id 3
 ```
 
-Run Nodes:
+### Run Nodes:
 ```bash
 go run ./nodes/AuctionNode.go -port 8080 -id 1
 go run ./nodes/AuctionNode.go -port 8081 -id 2 
 ```
 
-
-
-
-
+### Node Inputs:
 ```bash
 bid <amount>
 result
 ```
+Where amount is an integer
 
-<amount> is an integer
+### How to crash the program?
+You can manually crash the program through the use of `CTRL + C` or simply closing the terminal window.
 
 --------------------------------------------------------------------
 
