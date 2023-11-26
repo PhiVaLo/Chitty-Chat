@@ -5,8 +5,6 @@ import (
 	"bufio"
 	"context"
 	"flag"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"math"
 	"os"
@@ -16,6 +14,9 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -33,6 +34,8 @@ var (
 )
 
 func main() {
+
+	flag.Parse()
 
 	auctionNode := &AuctionNode{
 		id:           *id,
@@ -84,7 +87,6 @@ func main() {
 }
 
 func (auctionNode *AuctionNode) BidOnAuction(bid int) {
-	auctionNode.timestamp++
 
 	var wg sync.WaitGroup // Add waitgroup
 
@@ -102,14 +104,40 @@ func (auctionNode *AuctionNode) BidOnAuction(bid int) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			acknowledgementMessage, _ := database.AskForBid(context.Background(), msg)
+			acknowledgementMessage, err := database.AskForBid(context.Background(), msg)
+
+			if err != nil {
+				log.Fatalf("Error message: %v", err)
+			}
+
 			acknowledgementList[int(acknowledgementMessage.Id)] = acknowledgementMessage
 		}()
-		go errorHandling(&wg)
+		//go errorHandling(&wg)
 		wg.Wait()
 	}
 
-	log.Printf("You bidded %d \n", bid)
+	var newestMessage *proto.AcknowledgementMessage
+	highestTimestamp := math.MinInt64
+
+	for _, result := range acknowledgementList {
+		if int(result.Timestamp) > highestTimestamp {
+
+			newestMessage = result
+			highestTimestamp = int(result.Timestamp)
+		}
+	}
+
+	if newestMessage.State == 0 { // Bidder was allowed to bid
+		auctionNode.timestamp++
+		log.Printf("You bidded %d \n", bid)
+
+	} else if newestMessage.State == 1 { //Bid is too low
+		log.Printf("Bid is too low. Currentbid is: %d", newestMessage.HighestBid)
+
+	} else if newestMessage.State == 2 { //Auction is over
+		log.Printf("Auction is over - you can no longer bid")
+	}
+
 }
 
 func ConnectToDatabase(port int) (proto.DatabaseClient, error) {
@@ -146,7 +174,7 @@ func (auctionNode *AuctionNode) Result() {
 
 			resultList[int(resultMessage.Id)] = resultMessage
 		}()
-		go errorHandling(&wg)
+		//go errorHandling(&wg)
 		wg.Wait()
 	}
 
@@ -156,6 +184,7 @@ func (auctionNode *AuctionNode) Result() {
 
 	for _, result := range resultList {
 		if int(result.Timestamp) > highestTimestamp {
+
 			newestMessage = result
 			highestTimestamp = int(result.Timestamp)
 		}

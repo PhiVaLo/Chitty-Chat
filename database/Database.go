@@ -4,8 +4,6 @@ import (
 	"LogicalTime/proto"
 	"context"
 	"flag"
-	"fmt"
-	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"net"
 	"os"
@@ -14,6 +12,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"google.golang.org/grpc/credentials/insecure"
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -30,8 +30,8 @@ type Database struct {
 }
 
 type Auction struct {
-	id              int
-	item            string
+	id int
+	//item            string
 	highestBid      int
 	highestBidderId int
 	endTime         int // initialize when auction starts
@@ -44,9 +44,12 @@ var (
 )
 
 func main() {
+
+	flag.Parse()
+
 	auction := &Auction{
-		id:              1,
-		item:            "Santa's Silver Socks",
+		id: 1,
+		//item:            "Santa's Silver Socks",
 		highestBid:      0,
 		highestBidderId: -1,
 		endTime:         15, // Timestamp
@@ -93,6 +96,8 @@ func hasEnded(database *Database) {
 	for {
 		if database.currentAuction.endTime <= database.timestamp {
 			database.currentAuction.hasEnded = true
+			database.timestamp++
+			log.Printf("Auction has ended")
 			break
 		}
 	}
@@ -133,58 +138,70 @@ func (database *Database) AskForBid(ctx context.Context, in *proto.BidMessage) (
 	If the auction is over it will fail, telling the node the auction is over. */
 
 	log.Printf("Bidder %d wants to bid %d", in.Id, in.BidAmount)
-	database.timestamp++
 
-	var currentState string
+	var currentState int
 
 	if database.currentAuction.highestBid < int(in.BidAmount) { // If bid is higher that the current bid
-		currentState = "Success"
+		currentState = 0 //"Success"
 
 	} else if database.currentAuction.highestBid >= int(in.BidAmount) { // If bid is not higher than the current bid
-		currentState = fmt.Sprintf("Bid is not higher than current bid: %d", database.currentAuction.highestBid)
+		currentState = 1 //fmt.Sprintf("Bid is not higher than current bid: %d", database.currentAuction.highestBid)
 
 	} else if database.currentAuction.hasEnded == true { // if auction is over
-		currentState = "Auction has ended"
+		currentState = 2 //"Auction has ended"
 	}
 
-	// Correspond with other databases
-	for id, databaseConn := range database.databaseConn {
-		if id != database.id {
-			var wg sync.WaitGroup // Add waitgroup
+	log.Printf("Currentstate is %d", currentState)
 
-			msg := &proto.AuctionInfoMessage{
-				Id:              int64(database.id),
-				Timestamp:       int64(database.timestamp),
-				HighestBid:      int64(database.currentAuction.highestBid),
-				HighestBidderId: int64(database.currentAuction.highestBidderId),
-				Endtime:         int64(database.currentAuction.endTime),
-				HasEnded:        database.currentAuction.hasEnded,
-			}
-			var databaseCorrespondance *proto.AuctionInfoMessage
+	if currentState == 0 { // Bidder is allowed to bid
+		database.timestamp++
+		// Correspond with other databases
+		for id, databaseConn := range database.databaseConn {
+			if id != database.id {
+				var wg sync.WaitGroup // Add waitgroup
 
-			// If the method takes to long, go to errorhandling
-			wg.Add(1)
+				msg := &proto.AuctionInfoMessage{
+					Id:              int64(database.id),
+					Timestamp:       int64(database.timestamp),
+					HighestBid:      int64(database.currentAuction.highestBid),
+					HighestBidderId: int64(database.currentAuction.highestBidderId),
+					Endtime:         int64(database.currentAuction.endTime),
+					HasEnded:        database.currentAuction.hasEnded,
+				}
+				var databaseCorrespondance *proto.AuctionInfoMessage
+				var err error
 
-			go func() {
-				defer wg.Done()
-				databaseCorrespondance, _ = databaseConn.AskForCorrespondance(context.Background(), msg)
-			}()
-			go errorHandling(&wg)
+				// If the method takes to long, go to errorhandling
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					databaseCorrespondance, err = databaseConn.AskForCorrespondance(context.Background(), msg)
 
-			wg.Wait()
+					if err != nil {
+						log.Fatalf("Error message: %v", err)
+					}
 
-			// If the database has newer information, update the current auction
-			if databaseCorrespondance != nil {
-				database.timestamp = int(databaseCorrespondance.Timestamp)
-				database.currentAuction.Update(databaseCorrespondance)
+					// If the database has newer information, update the current auction
+					if databaseCorrespondance.State == 1 {
+						database.timestamp = int(databaseCorrespondance.Timestamp)
+						database.currentAuction.Update(databaseCorrespondance)
+					}
+				}()
+				wg.Wait()
 			}
 		}
+		//Update values of the auction
+		database.currentAuction.highestBid = int(in.BidAmount)
+		database.currentAuction.highestBidderId = int(in.Id)
+
+		log.Printf("Currentbid was updated")
 	}
 
 	return &proto.AcknowledgementMessage{
-		Id:        int64(database.id),
-		Timestamp: int64(database.timestamp),
-		State:     currentState,
+		Id:         int64(database.id),
+		Timestamp:  int64(database.timestamp),
+		State:      int64(currentState),
+		HighestBid: int64(database.currentAuction.highestBid),
 	}, nil
 }
 
@@ -210,10 +227,13 @@ func (database *Database) AskForCorrespondance(ctx context.Context, in *proto.Au
 			HighestBidderId: int64(database.currentAuction.highestBidderId),
 			Endtime:         int64(database.currentAuction.endTime),
 			HasEnded:        database.currentAuction.hasEnded,
+			State:           1,
 		}, nil
-	} else {
-		return nil, nil
 	}
+
+	return &proto.AuctionInfoMessage{
+		State: 0,
+	}, nil
 }
 
 func errorHandling(wg *sync.WaitGroup) {

@@ -2,6 +2,23 @@
 
 A node can input the following commands:
 
+Run Databases:
+```bash
+go run ./database/Database.go -port 5050 -id 1
+go run ./database/Database.go -port 5051 -id 2
+go run ./database/Database.go -port 5052 -id 3
+```
+
+Run Nodes:
+```bash
+go run ./nodes/AuctionNode.go -port 8080 -id 1
+go run ./nodes/AuctionNode.go -port 8081 -id 2 
+```
+
+
+
+
+
 ```bash
 bid <amount>
 result

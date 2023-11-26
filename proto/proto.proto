@@ -9,7 +9,8 @@ option go_package = "proto/proto";
 message AcknowledgementMessage {
     int64 id = 1;
     int64 timestamp = 2;
-    string state = 3;
+    int64 state = 3;
+    int64 highestBid = 4;
 }
 
 message BidMessage {
@@ -33,6 +34,7 @@ message AuctionInfoMessage {
     int64 highestBidderId = 4;
     int64 endtime = 5;
     bool hasEnded = 6;
+    int64 state = 7;
 }
 
 
