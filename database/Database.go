@@ -5,6 +5,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"net"
 	"os"
@@ -38,8 +39,8 @@ type Auction struct {
 }
 
 var (
-	port = flag.Int("port", 0, "node port number")
-	id   = flag.Int("id", 0, "nodeID should be unique")
+	port = flag.Int("port", 0, "database port number")
+	id   = flag.Int("id", 0, "databaseID should be unique")
 )
 
 func main() {
@@ -71,11 +72,21 @@ func main() {
 
 	go hasEnded(database)
 
-	// Keep the node running / Wait for shutdown
+	// Keep the database running / Wait for shutdown
 	signalChannel := make(chan os.Signal, 1)
 	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM) // Notifies the channel when ctrl+c is pressed or the terminal is interrupted
 
 	<-signalChannel // Waits for the channel to receive a signal
+}
+
+func ConnectToDatabase(port int) (proto.DatabaseClient, error) {
+	// Dial the database at the specified port.
+	conn, err := grpc.Dial("localhost:"+strconv.Itoa(port), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Could not connect to port %d", port)
+	}
+
+	return proto.NewDatabaseClient(conn), nil
 }
 
 func hasEnded(database *Database) {
@@ -94,12 +105,12 @@ func startDatabase(database *Database) {
 	// Make the server listen at the given port (convert int port to string)
 	listener, err := net.Listen("tcp", ":"+strconv.Itoa(database.port))
 
-	// Error handling if node could not be created
+	// Error handling if database could not be created
 	if err != nil {
-		log.Fatalf("Could not create the node %v", err)
+		log.Fatalf("Could not create the database %v", err)
 	}
 
-	log.Printf("Started node at port: %d ; lamport timestamp %d \n", database.port, database.timestamp)
+	log.Printf("Started database at port: %d ; lamport timestamp %d \n", database.port, database.timestamp)
 
 	proto.RegisterDatabaseServer(grpcServer, database)
 	serveError := grpcServer.Serve(listener)
@@ -178,6 +189,7 @@ func (database *Database) AskForBid(ctx context.Context, in *proto.BidMessage) (
 }
 
 func (database *Database) AskForResult(ctx context.Context, in *emptypb.Empty) (*proto.ResultMessage, error) {
+	log.Printf("You requested the current result \n")
 	return &proto.ResultMessage{
 		Id:           int64(database.id),
 		Timestamp:    int64(database.timestamp),

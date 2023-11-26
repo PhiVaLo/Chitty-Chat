@@ -5,6 +5,8 @@ import (
 	"bufio"
 	"context"
 	"flag"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"math"
 	"os"
@@ -54,7 +56,12 @@ func main() {
 
 		splitInput := strings.Split(userInput, " ")
 
-		bidAmount, err := strconv.Atoi(splitInput[1])
+		var bidAmount int
+		var err error
+
+		if len(splitInput) > 1 {
+			bidAmount, err = strconv.Atoi(splitInput[1])
+		}
 
 		switch {
 		case splitInput[0] == "bid" && err == nil && bidAmount > 0: // If the user makes a bid as input, they are bidding on the auction
@@ -105,6 +112,16 @@ func (auctionNode *AuctionNode) BidOnAuction(bid int) {
 	log.Printf("You bidded %d \n", bid)
 }
 
+func ConnectToDatabase(port int) (proto.DatabaseClient, error) {
+	// Dial the database at the specified port.
+	conn, err := grpc.Dial("localhost:"+strconv.Itoa(port), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Could not connect to port %d", port)
+	}
+
+	return proto.NewDatabaseClient(conn), nil
+}
+
 func (auctionNode *AuctionNode) Result() {
 	log.Printf("You requested the current result \n")
 	var wg sync.WaitGroup // Add waitgroup
@@ -119,7 +136,14 @@ func (auctionNode *AuctionNode) Result() {
 
 		go func() {
 			defer wg.Done()
-			resultMessage, _ := database.AskForResult(context.Background(), &emptypb.Empty{})
+			resultMessage, err := database.AskForResult(context.Background(), &emptypb.Empty{})
+
+			if err != nil {
+				log.Fatalf("This is an error: %v", err)
+				wg.Done()
+				return
+			}
+
 			resultList[int(resultMessage.Id)] = resultMessage
 		}()
 		go errorHandling(&wg)
