@@ -35,14 +35,6 @@ Distributed Systems (B-SWU & K-SD, Autumn 2023)
 * Mandatory Hand-in 5 - Replication
 * Submision Due Date: *`Tuesday 28, November 2023, 23:59`*
 
-## Report
-
-- [Google Docs](https://docs.google.com/document/d/1CT_8YhAHZcycnY6ix9731VRISfUEH5zQjuLDVVoCBTo/edit)
-
-<div style="text-align: center;">
-    <img src="https://i.imgur.com/NcX1hkX.png" alt="Centered Image" width="300">
-</div>
-
 --------------------------------------------------------------------
 
 # == A Distributed Auction System ==
