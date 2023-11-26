@@ -60,25 +60,31 @@ func main() {
 		currentAuction: *auction,
 	}
 
-	// Initialize database map of connected databases
-	database.databaseConn[0], _ = ConnectToDatabase(5050)
-	database.databaseConn[1], _ = ConnectToDatabase(5051)
-	database.databaseConn[2], _ = ConnectToDatabase(5052)
-
 	go startDatabase(database)
 
-	for {
-		if auction.endTime <= database.timestamp {
-			auction.hasEnded = true
-			break
-		}
-	}
+	// Initialize database map of connected databases
+	go func() {
+		database.databaseConn[0], _ = ConnectToDatabase(5050)
+		database.databaseConn[1], _ = ConnectToDatabase(5051)
+		database.databaseConn[2], _ = ConnectToDatabase(5052)
+	}()
+
+	go hasEnded(database)
 
 	// Keep the node running / Wait for shutdown
 	signalChannel := make(chan os.Signal, 1)
 	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM) // Notifies the channel when ctrl+c is pressed or the terminal is interrupted
 
 	<-signalChannel // Waits for the channel to receive a signal
+}
+
+func hasEnded(database *Database) {
+	for {
+		if database.currentAuction.endTime <= database.timestamp {
+			database.currentAuction.hasEnded = true
+			break
+		}
+	}
 }
 
 func startDatabase(database *Database) {
